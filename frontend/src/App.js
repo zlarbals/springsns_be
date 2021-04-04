@@ -5,6 +5,7 @@ import Configuration from "./Configuration.js";
 import Posts from "./Posts.js";
 import Profile from "./Profile";
 import ModalWindow from "./modalwindow";
+import EmailCheck from "./EmailCheck";
 import cookie from "js-cookie";
 
 class App extends Component {
@@ -39,7 +40,8 @@ class App extends Component {
     const state = this.state;
     const newState = Object.assign({}, state, { user: { loggedin: false } });
     this.setState(newState);
-    cookie.set("user", { loggedin: false });
+    //cookie.set("user", null);
+    cookie.remove("user");
 
     window.location.href = "http://localhost:3000";
   }
@@ -59,38 +61,61 @@ class App extends Component {
   }
 
   render() {
-    //쿠키 확인하는 것으로 변경 필요.
     let isLogin = true;
+
+    const user = cookie.getJSON("user");
+    const emailVerified = { user };
+
+    console.log(emailVerified);
+
+    if (user === undefined) {
+      isLogin = false;
+    }
+
     return (
-      <div className="container">
-        <Router>
-          <Navigation
-            user={this.state.user}
-            handleSignedOut={this.handleSignedOut}
-            showModalWindow={this.showSignInModalWindow}
-          />
+      <>
+        {isLogin === true && user.emailVerified === false && (
+          <span className="d-block p-2 bg-primary text-white">
+            이메일 인증을 하셔야 게시글을 작성할 수 있습니다. Configuration에서
+            인증 이메일을 재전송 할 수 있습니다.
+          </span>
+        )}
 
-          <div className="row">
-            {isLogin === true && (
-              <div className="col-6 col-md-4">
-                <Profile />
+        <div className="container">
+          <Router>
+            <Navigation
+              user={this.state.user}
+              handleSignedOut={this.handleSignedOut}
+              showModalWindow={this.showSignInModalWindow}
+            />
+
+            <div className="row">
+              {isLogin === true && (
+                <div className="col-6 col-md-4">
+                  <Profile />
+                </div>
+              )}
+
+              <div className="col-md-8">
+                <Route exact path="/" component={Posts} />
+                {/* <Route path="/Login" component={Login} /> */}
+                <Route path="/Configuration" component={Configuration} />
+                <Route
+                  path="/CheckEmailToken:checkemailtoken"
+                  component={EmailCheck}
+                />
               </div>
-            )}
-
-            <div className="col-md-8">
-              <Route exact path="/" component={Posts} />
-              {/* <Route path="/Login" component={Login} /> */}
-              <Route path="/Configuration" component={Configuration} />
             </div>
-          </div>
 
-          <ModalWindow
-            handleSignedIn={this.handleSignedIn}
-            showModal={this.state.showSignInModal}
-            toggle={this.toggleSignInModalWindow}
-          />
-        </Router>
-      </div>
+            <ModalWindow
+              handleSignedIn={this.handleSignedIn}
+              showModal={this.state.showSignInModal}
+              toggle={this.toggleSignInModalWindow}
+              showModalWindow={this.showSignInModalWindow}
+            />
+          </Router>
+        </div>
+      </>
     );
   }
 }

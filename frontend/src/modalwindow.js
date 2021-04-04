@@ -14,10 +14,34 @@ function submitRequest(path, requestBody, handleSignedIn, handleError) {
     .then((response) => response.json())
     .then((json) => {
       console.log("Response received....");
+      console.log(json);
       if (json.error === undefined || !json.error) {
         console.log("Sign in Success...");
-        cookie.set("user", json);
+        cookie.set("user", json.jwtToken);
+        //jwt token 저장 완료 이것 사용해서 post도 구현해볼 것.
         handleSignedIn(json);
+      } else {
+        console.log("Sign in error here");
+        handleError(json.error);
+      }
+    })
+    .catch((error) => console.log(error));
+}
+
+function submitSignUpRequest(path, requestBody, handleError) {
+  fetch(path, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log("Response received....");
+      if (json.error === undefined || !json.error) {
+        console.log("Sign Up Success...");
       } else {
         handleError(json.error);
       }
@@ -136,17 +160,14 @@ class SignUpForm extends React.Component {
     }
 
     const requestBody = {
-      name: userInfo.usernickname,
+      nickname: userInfo.nickname,
       email: userInfo.email,
       password: userInfo.pass1,
     };
 
-    submitRequest(
-      "users",
-      requestBody,
-      this.props.handleSignedIn,
-      this.handleError
-    );
+    submitSignUpRequest("sign-up", requestBody, this.handleError);
+
+    this.props.showSignInModal();
 
     console.log("Registration form: " + requestBody);
   }
@@ -177,10 +198,10 @@ class SignUpForm extends React.Component {
         <form onSubmit={this.handleSubmit}>
           <h5 className="mb-4">SignUp</h5>
           <div className="form-group">
-            <label htmlFor="username">User Nickname:</label>
+            <label htmlFor="username">Nickname:</label>
             <input
-              id="usernickname"
-              name="usernickname"
+              id="nickname"
+              name="nickname"
               className="form-control"
               placeholder="John Doe"
               type="text"
@@ -261,7 +282,7 @@ export default class ModalWindow extends React.Component {
       />
     );
     if (this.state.showSignUpForm === true) {
-      modalBody = <SignUpForm handleSignedIn={this.props.handleSignedIn} />;
+      modalBody = <SignUpForm showSignInModal={this.handleModalClose} />;
     }
 
     return (

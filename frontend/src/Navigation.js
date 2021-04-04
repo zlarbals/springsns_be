@@ -18,11 +18,17 @@ class Navigation extends React.Component {
 
     console.log("Sign out: " + user);
     //fetch  -- backend와 연결하면 fetch로 전달할 것.
-    this.props.handleSignOut();
+    this.props.handleSignedOut();
     console.log("Handle Sign out");
   }
 
   render() {
+    let isLogin = true;
+
+    if (cookie.getJSON("user") === undefined) {
+      isLogin = false;
+    }
+
     return (
       <div>
         <ul className="nav justify-content-center">
@@ -30,14 +36,21 @@ class Navigation extends React.Component {
             <Link to="/">Home</Link>
           </li>
           <li className="nav-link">
-            <Link
-              onClick={() => {
-                this.props.showModalWindow();
-                console.log("show called");
-              }}
-            >
-              Login
-            </Link>
+            {isLogin === false ? (
+              <Link
+                to="/"
+                onClick={() => {
+                  this.props.showModalWindow();
+                  console.log("show called");
+                }}
+              >
+                Login
+              </Link>
+            ) : (
+              <Link to="/" onClick={this.handleSignOut}>
+                Logout
+              </Link>
+            )}
           </li>
           <li className="nav-link">
             <Link to="/Configuration">Configuration</Link>
