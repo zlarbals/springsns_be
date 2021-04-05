@@ -23,12 +23,12 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
         String token = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest);
 
         //유효한 토큰인지 확인
-        if(token != null && jwtTokenProvider.validateJwtToken(token)){
+        if (token != null && jwtTokenProvider.validateJwtToken(token)) {
             //토큰이 유효하면 토큰으로부터 유저 정보 받기
             Authentication authentication = jwtTokenProvider.getAuthentication(token);
             //authentication 객체 저장.
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-        filterChain.doFilter(servletRequest,servletResponse);
+        filterChain.doFilter(servletRequest, servletResponse);
     }
 }

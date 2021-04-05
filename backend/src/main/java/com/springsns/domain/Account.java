@@ -4,7 +4,6 @@ import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -24,7 +23,7 @@ import java.util.stream.Collectors;
 @Builder @AllArgsConstructor @NoArgsConstructor
 public class Account implements UserDetails {
 
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique=true)
@@ -57,11 +56,6 @@ public class Account implements UserDetails {
     public void generateEmailCheckToken() {
         //uuid를 통해 랜덤한 값 생성해서 저장하기
         this.emailCheckToken= UUID.randomUUID().toString();
-    }
-
-    public void completeSignUp() {
-        this.emailVerified=true;
-        this.joinedAt=LocalDateTime.now();
     }
 
     public boolean isValidToken(String token) {
