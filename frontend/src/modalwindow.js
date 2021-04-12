@@ -17,9 +17,10 @@ function submitRequest(path, requestBody, handleSignedIn, handleError) {
       console.log(json);
       if (json.error === undefined || !json.error) {
         console.log("Sign in Success...");
-        cookie.set("user", json.jwtToken);
+        cookie.set("X-AUTH-TOKEN", json.jwtToken);
+        cookie.set("user", json.user);
         //jwt token 저장 완료 이것 사용해서 post도 구현해볼 것.
-        handleSignedIn(json);
+        handleSignedIn(json.user);
       } else {
         console.log("Sign in error here");
         handleError(json.error);
@@ -29,6 +30,8 @@ function submitRequest(path, requestBody, handleSignedIn, handleError) {
 }
 
 function submitSignUpRequest(path, requestBody, handleError) {
+  console.log(path);
+
   fetch(path, {
     method: "POST",
     headers: {
@@ -94,7 +97,7 @@ class SignInForm extends React.Component {
       <div>
         {message}
         <form onSubmit={this.handleSubmit}>
-          <h5 className="mb-4">Sign in</h5>
+          <h5 className="mb-4">Sign In</h5>
           <div className="form-group">
             <label htmlFor="email">Email:</label>
             <input
@@ -196,7 +199,7 @@ class SignUpForm extends React.Component {
       <div>
         {message}
         <form onSubmit={this.handleSubmit}>
-          <h5 className="mb-4">SignUp</h5>
+          <h5 className="mb-4">Sign Up</h5>
           <div className="form-group">
             <label htmlFor="username">Nickname:</label>
             <input
@@ -299,7 +302,7 @@ export default class ModalWindow extends React.Component {
             toggle={this.props.toggle}
             className="bg-success text-white"
           >
-            Sign in
+            Spring SNS
           </ModalHeader>
           <ModalBody>{modalBody}</ModalBody>
         </div>

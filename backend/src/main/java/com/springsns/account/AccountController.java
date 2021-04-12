@@ -40,7 +40,9 @@ public class AccountController {
 
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("jwtToken", jwtToken); // jwt 토큰 저장.
-        resultMap.put("emailVerified", account.isEmailVerified());
+        //resultMap.put("emailVerified", account.isEmailVerified());
+        //account를 넘겨주면서 email verified 여부까지 넘어간다.
+        resultMap.put("user",account);  //TODO 비밀번호까지 다 넘어가는데 이메일 닉네임 정도만 가도록 DTO 만들 것.
 
         return new ResponseEntity(resultMap, HttpStatus.OK);
 
@@ -60,6 +62,10 @@ public class AccountController {
 
     @GetMapping("/check-email-token")
     public ResponseEntity checkEmailToken(String token, String email) {
+
+        System.out.println(token);
+        System.out.println(email);
+
         Account account = accountRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
 
         //토큰 비교해서 다른 경우.
@@ -68,10 +74,10 @@ public class AccountController {
         }
 
         //emailVerified를 true로 만들고 등록날짜 설정.
-        accountService.completeSignUp(account);
+        Account emailVerifiedAccount = accountService.completeSignUp(account);
 
         Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("emailVerified", account.isEmailVerified());
+        resultMap.put("user", emailVerifiedAccount);
 
         return new ResponseEntity(resultMap, HttpStatus.OK);
 

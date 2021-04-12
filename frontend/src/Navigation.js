@@ -23,14 +23,18 @@ class Navigation extends React.Component {
   }
 
   render() {
-    let isLogin = true;
+    let isLogin = false;
+    let emailVerified = false;
 
-    if (cookie.getJSON("user") === undefined) {
-      isLogin = false;
+    const user = cookie.getJSON("user");
+
+    if (user !== undefined) {
+      isLogin = true;
+      emailVerified = user.emailVerified;
     }
 
     return (
-      <div>
+      <div className="mb-5">
         <ul className="nav justify-content-center">
           <li className="nav-link">
             <Link to="/">Home</Link>
@@ -54,6 +58,19 @@ class Navigation extends React.Component {
           </li>
           <li className="nav-link">
             <Link to="/Configuration">Configuration</Link>
+          </li>
+          <li className="nav-link">
+            {emailVerified === true && (
+              <Link
+                to="/"
+                onClick={() => {
+                  this.props.showPostModalWindow();
+                  console.log("post modal called");
+                }}
+              >
+                게시글 작성
+              </Link>
+            )}
           </li>
         </ul>
       </div>

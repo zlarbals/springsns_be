@@ -28,6 +28,8 @@ public class PostController {
     public ResponseEntity registerPost(@RequestBody PostForm postForm, Principal principal) {
         String email = principal.getName();
 
+        System.out.println("here is post post");
+
         Account account = accountRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
 
         //이메일 인증이 안된 경우
@@ -52,6 +54,9 @@ public class PostController {
 
     @GetMapping("/post")
     public ResponseEntity findAllPosts() {
+
+        System.out.println("here is get post");
+
 
         //모든 post 가져오기.
         List<Post> postList = postService.findAllPosts();

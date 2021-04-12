@@ -63,8 +63,10 @@ public class AccountService {
     }
 
     @Transactional
-    public void completeSignUp(Account account) {
+    public Account completeSignUp(Account account) {
         account.setEmailVerified(true);
         account.setJoinedAt(LocalDateTime.now());
+
+        return account;
     }
 }
