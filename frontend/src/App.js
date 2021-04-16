@@ -117,13 +117,11 @@ class App extends Component {
             />
 
             <div className="row">
-              {isLogin === true && (
-                <div className="col-md-2">
-                  <Profile />
-                </div>
-              )}
+              <div className="col-md-3">
+                <Profile />
+              </div>
 
-              <div className="col-md-1"></div>
+              {/* <div className="col-md-1"></div> */}
 
               <div className="col-md-9">
                 <Route exact path="/" component={Posts} />

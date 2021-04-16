@@ -45,8 +45,8 @@ public class Account implements UserDetails {
     //좋아요 받은 총 갯수
     private int likeCount;
 
-    //싫어요 받은 총 갯수
-    private int dislikeCount;
+    //게시글 작성 총 갯수
+    private int postCount;
 
 
     @ElementCollection(fetch = FetchType.EAGER)

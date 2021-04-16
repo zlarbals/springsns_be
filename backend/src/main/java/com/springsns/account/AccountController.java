@@ -5,11 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -17,67 +20,74 @@ import java.util.Map;
 public class AccountController {
 
     private final SignUpFormValidator signUpFormValidator;
+    private final SignInFormValidator signInFormValidator;
     private final AccountService accountService;
     private final AccountRepository accountRepository;
-    private final JwtTokenProvider jwtTokenProvider;
 
     //signUpForm이라는 데이터를 받을 때 바인더를 설정할 수 있다.
     @InitBinder("signUpForm")
-    public void initBinder(WebDataBinder webDataBinder) {
+    public void initBinderForSignUp(WebDataBinder webDataBinder) {
         webDataBinder.addValidators(signUpFormValidator);
     }
 
-    @PostMapping("/users/signin")
-    public ResponseEntity signInSubmit(@RequestBody SignInForm signInForm, Errors errors) {
-        Account account = accountRepository.findByEmail(signInForm.getEmail()).orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
-
-        if (!accountService.isValidPassword(signInForm.getPassword(), account.getPassword())) {
-            throw new IllegalArgumentException("잘못된 비밀번호입니다.");
-        }
-
-        //jwt 토큰 생성
-        String jwtToken = jwtTokenProvider.createToken(account.getUsername(), account.getRoles());
-
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("jwtToken", jwtToken); // jwt 토큰 저장.
-        //resultMap.put("emailVerified", account.isEmailVerified());
-        //account를 넘겨주면서 email verified 여부까지 넘어간다.
-        resultMap.put("user",account);  //TODO 비밀번호까지 다 넘어가는데 이메일 닉네임 정도만 가도록 DTO 만들 것.
-
-        return new ResponseEntity(resultMap, HttpStatus.OK);
-
+    @InitBinder("signInForm")
+    public void initBinderForSignIn(WebDataBinder webDataBinder){
+        webDataBinder.addValidators(signInFormValidator);
     }
 
     @PostMapping("/sign-up")
     public ResponseEntity signUpSubmit(@Valid @RequestBody SignUpForm signUpForm, Errors errors) {
+        System.out.println("here is /sign-up");
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().body(errors);
+            Map<String, Object> resultMap = new HashMap<>();
+
+            List<ObjectError> allErrors = errors.getAllErrors();
+            List<String> errorsMessage=new ArrayList<>();
+            for(ObjectError error:allErrors){
+                errorsMessage.add(error.getDefaultMessage());
+            }
+
+            resultMap.put("error",errorsMessage);
+            return ResponseEntity.badRequest().body(resultMap);
         }
 
         //new account 생성 저장, email check token 생성, email 보내기.
-        Account account = accountService.processNewAccount(signUpForm);
+        AccountResponseDto accountResponseDto = accountService.processNewAccount(signUpForm);
 
-        return ResponseEntity.ok().body(account);
+        return ResponseEntity.ok().body(accountResponseDto);
+    }
+
+    @PostMapping("/users/signin")
+    public ResponseEntity signInSubmit(@Valid @RequestBody SignInForm signInForm, Errors errors) {
+        System.out.println("here is /users/signin");
+        if(errors.hasErrors()){
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        Map<String,Object> resultMap;
+        //jwt토큰과 user 정보를 맵에 리턴.
+        resultMap = accountService.createJWTToken(signInForm);
+
+        return new ResponseEntity(resultMap, HttpStatus.OK);
     }
 
     @GetMapping("/check-email-token")
     public ResponseEntity checkEmailToken(String token, String email) {
+        System.out.println("here is /check-email-token");
 
-        System.out.println(token);
-        System.out.println(email);
-
-        Account account = accountRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
+        //Account account = accountRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
+        Account account = accountRepository.findByEmail(email);
 
         //토큰 비교해서 다른 경우.
-        if (!account.isValidToken(token)) {
+        if (account == null || !account.isValidToken(token)) {
             return ResponseEntity.badRequest().build();
         }
 
         //emailVerified를 true로 만들고 등록날짜 설정.
-        Account emailVerifiedAccount = accountService.completeSignUp(account);
+        AccountResponseDto accountResponseDto = accountService.completeSignUp(account);
 
         Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("user", emailVerifiedAccount);
+        resultMap.put("user", accountResponseDto);
 
         return new ResponseEntity(resultMap, HttpStatus.OK);
 

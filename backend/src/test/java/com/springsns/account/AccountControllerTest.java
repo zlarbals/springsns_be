@@ -91,7 +91,8 @@ class AccountControllerTest {
                 .andExpect(authenticated().withUsername("kimkim11"));
         //.andExpect(jsonPath("email").value("zlarbals@gmail.com"));
 
-        Account account = accountRepository.findByEmail("zlarbals@gmail.com").orElseThrow(()->new IllegalArgumentException());
+        //Account account = accountRepository.findByEmail("zlarbals@gmail.com").orElseThrow(()->new IllegalArgumentException());
+        Account account = accountRepository.findByEmail("zlarbals@gmail.com");
         assertNotNull(account);
         assertNotEquals(account.getPassword(), "dskljasdf32423");
         assertNotNull(account.getEmailCheckToken());

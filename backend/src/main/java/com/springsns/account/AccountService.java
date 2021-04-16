@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -18,11 +20,12 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final JavaMailSender javaMailSender;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     //@transactional을 붙여서 범위안에 넣어놔야 해당 객체는 persist상태가 유지된다.
     //persist상태의 객체는 transaction이 종료될 때 상태를 db에 싱크한다.
     @Transactional
-    public Account processNewAccount(SignUpForm signUpForm) {
+    public AccountResponseDto processNewAccount(SignUpForm signUpForm) {
         //signUpForm으로 newAccount 생성하고 저장.
         Account newAccount = saveNewAccount(signUpForm);
         //email check token 생성.
@@ -30,7 +33,9 @@ public class AccountService {
         //확인 email 보내기.
         sendSignUpConfirmEmail(newAccount);
 
-        return newAccount;
+        AccountResponseDto accountResponseDto = new AccountResponseDto(newAccount);
+
+        return accountResponseDto;
     }
 
     //회원 가입 처리
@@ -63,10 +68,27 @@ public class AccountService {
     }
 
     @Transactional
-    public Account completeSignUp(Account account) {
+    public AccountResponseDto completeSignUp(Account account) {
         account.setEmailVerified(true);
         account.setJoinedAt(LocalDateTime.now());
 
-        return account;
+        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
+
+        return accountResponseDto;
+    }
+
+
+    public Map<String, Object> createJWTToken(SignInForm signInForm) {
+        Account account = accountRepository.findByEmail(signInForm.getEmail());
+        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
+
+        //jwt 토큰 생성
+        String jwtToken = jwtTokenProvider.createToken(account.getUsername(),account.getRoles());
+
+        Map<String,Object> resultMap = new HashMap<>();
+        resultMap.put("jwtToken",jwtToken);
+        resultMap.put("user",accountResponseDto);
+
+        return resultMap;
     }
 }

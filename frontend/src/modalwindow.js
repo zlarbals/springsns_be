@@ -19,7 +19,6 @@ function submitRequest(path, requestBody, handleSignedIn, handleError) {
         console.log("Sign in Success...");
         cookie.set("X-AUTH-TOKEN", json.jwtToken);
         cookie.set("user", json.user);
-        //jwt token 저장 완료 이것 사용해서 post도 구현해볼 것.
         handleSignedIn(json.user);
       } else {
         console.log("Sign in error here");
@@ -29,7 +28,7 @@ function submitRequest(path, requestBody, handleSignedIn, handleError) {
     .catch((error) => console.log(error));
 }
 
-function submitSignUpRequest(path, requestBody, handleError) {
+function submitSignUpRequest(path, requestBody, handleError, showSignInModal) {
   console.log(path);
 
   fetch(path, {
@@ -45,8 +44,11 @@ function submitSignUpRequest(path, requestBody, handleError) {
       console.log("Response received....");
       if (json.error === undefined || !json.error) {
         console.log("Sign Up Success...");
+        console.log(json);
+        showSignInModal();
       } else {
-        handleError(json.error);
+        console.log(json);
+        handleError();
       }
     })
     .catch((error) => console.log(error));
@@ -81,16 +83,16 @@ class SignInForm extends React.Component {
     );
   }
 
-  handleError(error) {
+  handleError() {
     this.setState({
-      errorMessage: error,
+      errorMessage: "로그인에 실패했습니다.",
     });
   }
 
   render() {
     let message = null;
     if (this.state.errorMessage.length !== 0) {
-      message = <h5 className="mb-4 textdanger">{this.state.errorMessage}</h5>;
+      message = <h5 className="mb-4 text-danger">{this.state.errorMessage}</h5>;
     }
 
     return (
@@ -144,7 +146,7 @@ class SignUpForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      errormessage: "",
+      errormessage: [],
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -168,9 +170,14 @@ class SignUpForm extends React.Component {
       password: userInfo.pass1,
     };
 
-    submitSignUpRequest("sign-up", requestBody, this.handleError);
+    submitSignUpRequest(
+      "sign-up",
+      requestBody,
+      this.handleError,
+      this.props.showSignInModal
+    );
 
-    this.props.showSignInModal();
+    // this.props.showSignInModal();
 
     console.log("Registration form: " + requestBody);
   }
@@ -191,10 +198,16 @@ class SignUpForm extends React.Component {
   }
 
   render() {
-    let message = null;
-    if (this.state.errormessage.length !== 0) {
-      message = <h5 className="mb-4 text-danger">{this.state.errormessage}</h5>;
-    }
+    // let message = null;
+    // if (this.state.errormessage.length !== 0) {
+    //   message = <h5 className="mb-4 text-danger">{this.state.errormessage}</h5>;
+    // }
+
+    const errorMessages = this.state.errormessage;
+    let message = errorMessages.map((errorMessage) => (
+      <h5 className="mb-4 text-danger">{errorMessage}</h5>
+    ));
+
     return (
       <div>
         {message}

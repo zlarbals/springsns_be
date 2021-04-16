@@ -17,7 +17,6 @@ class Navigation extends React.Component {
     }
 
     console.log("Sign out: " + user);
-    //fetch  -- backend와 연결하면 fetch로 전달할 것.
     this.props.handleSignedOut();
     console.log("Handle Sign out");
   }
@@ -37,9 +36,6 @@ class Navigation extends React.Component {
       <div className="mb-5">
         <ul className="nav justify-content-center">
           <li className="nav-link">
-            <Link to="/">Home</Link>
-          </li>
-          <li className="nav-link">
             {isLogin === false ? (
               <Link
                 to="/"
@@ -57,10 +53,12 @@ class Navigation extends React.Component {
             )}
           </li>
           <li className="nav-link">
-            <Link to="/Configuration">Configuration</Link>
+            <h5>
+              <Link to="/">Spring SNS</Link>
+            </h5>
           </li>
-          <li className="nav-link">
-            {emailVerified === true && (
+          {emailVerified === true ? (
+            <li className="nav-link">
               <Link
                 to="/"
                 onClick={() => {
@@ -70,8 +68,32 @@ class Navigation extends React.Component {
               >
                 게시글 작성
               </Link>
+            </li>
+          ) : (
+            <li className="nav-link disabled">
+              <Link
+                to="/"
+                onClick={() => {
+                  this.props.showPostModalWindow();
+                  console.log("post modal called");
+                }}
+              >
+                게시글 작성
+              </Link>
+            </li>
+          )}
+          {/* <li className="nav-link">
+            {emailVerified === true && (
+              <Link
+                onClick={() => {
+                  this.props.showPostModalWindow();
+                  console.log("post modal called");
+                }}
+              >
+                게시글 작성
+              </Link>
             )}
-          </li>
+          </li> */}
         </ul>
       </div>
     );

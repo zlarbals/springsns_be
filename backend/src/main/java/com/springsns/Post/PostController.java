@@ -26,14 +26,13 @@ public class PostController {
     //현재 인증된 사용자의 정보를 Principal로 직접 접근할 수 있다.
     @PostMapping("/post")
     public ResponseEntity registerPost(@RequestBody PostForm postForm, Principal principal) {
+        System.out.println("here is post /post");
         String email = principal.getName();
 
-        System.out.println("here is post post");
-
-        Account account = accountRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
+        Account account = accountRepository.findByEmail(email);
 
         //이메일 인증이 안된 경우
-        if (!account.isEmailVerified()) {
+        if (account==null || !account.isEmailVerified()) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -48,15 +47,13 @@ public class PostController {
         //저장.
         Post newPost = postRepository.save(post);
 
-
         return ResponseEntity.ok().body(newPost);
     }
 
     @GetMapping("/post")
     public ResponseEntity findAllPosts() {
 
-        System.out.println("here is get post");
-
+        System.out.println("here is get /post");
 
         //모든 post 가져오기.
         List<Post> postList = postService.findAllPosts();

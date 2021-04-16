@@ -60,7 +60,6 @@ class PostForm extends React.Component {
     });
   }
 
-  //모달 포스트 폼 작성하면 된다.
   render() {
     let message = null;
     if (this.state.errorMessage.length !== 0) {
@@ -81,7 +80,7 @@ class PostForm extends React.Component {
               onChange={this.handleChange}
             />
             <div className="col-12 mt-2">
-              <button type="submit" className="btn btn-success btn-largew">
+              <button type="submit" className="btn btn-success btn-large">
                 작성 완료
               </button>
             </div>
