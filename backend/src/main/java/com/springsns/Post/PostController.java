@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class PostController {
         Account account = accountRepository.findByEmail(email);
 
         //이메일 인증이 안된 경우
-        if (account==null || !account.isEmailVerified()) {
+        if (account == null || !account.isEmailVerified()) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -51,12 +53,19 @@ public class PostController {
     }
 
     @GetMapping("/post")
-    public ResponseEntity findAllPosts() {
-
+    public ResponseEntity findAllPosts(Principal principal) {
         System.out.println("here is get /post");
 
+        String email = null;
+        List<PostResponseDto> postList;
+
+        if (principal != null) {
+            email = principal.getName();
+        }
+
         //모든 post 가져오기.
-        List<Post> postList = postService.findAllPosts();
+        postList = postService.findAllPosts(email);
+
 
         return ResponseEntity.ok(postList);
     }

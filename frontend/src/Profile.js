@@ -19,7 +19,7 @@ class Profile extends React.Component {
     console.log(user);
 
     return (
-      <div className="card border-primary">
+      <div className="card border-primary mb-5">
         <div className="card-body">
           <h5 className="card-title">{greetingMessage}</h5>
           <h5 className="card-text">{name}</h5>
@@ -27,13 +27,13 @@ class Profile extends React.Component {
         {isLogin ? (
           <ul className="list-group list-group-flush">
             <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-              내 게시글 갯수
+              내가 작성한 게시글 보기
               <span className="badge bg-primary rounded-pill">
                 {user.likeCount}
               </span>
             </li>
             <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-              내가 받은 좋아요 갯수
+              좋아요한 게시글 보기
               <span className="badge bg-primary rounded-pill">
                 {user.likeCount}
               </span>
