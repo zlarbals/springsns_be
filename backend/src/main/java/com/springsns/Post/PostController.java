@@ -57,14 +57,13 @@ public class PostController {
         System.out.println("here is get /post");
 
         String email = null;
-        List<PostResponseDto> postList;
 
         if (principal != null) {
             email = principal.getName();
         }
 
         //모든 post 가져오기.
-        postList = postService.findAllPosts(email);
+        List<PostResponseDto> postList = postService.findAllPosts(email);
 
 
         return ResponseEntity.ok(postList);

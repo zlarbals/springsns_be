@@ -24,6 +24,8 @@ class App extends Component {
     this.showSignInModalWindow = this.showSignInModalWindow.bind(this);
     this.toggleSignInModalWindow = this.toggleSignInModalWindow.bind(this);
     this.showPostModalWindow = this.showPostModalWindow.bind(this);
+    this.togglePostModalWindow = this.togglePostModalWindow.bind(this);
+    this.showPostModalWindow = this.showPostModalWindow.bind(this);
     this.handlePost = this.handlePost.bind(this);
   }
 
@@ -33,7 +35,7 @@ class App extends Component {
     this.setState(newState);
   }
 
-  togglePostModalWIndow() {
+  togglePostModalWindow() {
     const state = this.state;
     const newState = Object.assign({}, state, {
       showPostModal: !state.showPostModal,
@@ -144,7 +146,7 @@ class App extends Component {
             <PostModalWindow
               handlePost={this.handlePost}
               showModal={this.state.showPostModal}
-              toggle={this.togglePostModaloWIndow}
+              toggle={this.togglePostModalWindow}
               showModalWindow={this.showPostModalWindow}
             />
           </Router>
