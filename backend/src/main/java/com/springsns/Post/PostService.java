@@ -31,12 +31,12 @@ public class PostService {
             account = accountRepository.findByEmail(email);
 
         if(account==null){
-            //TODO 그냥 PostREsponseDto에 담아서 넘겨줌
+            // 그냥 PostResponseDto에 담아서 넘겨줌
             for(Post post:postList){
                 result.add(new PostResponseDto(post,false));
             }
         }else{
-            //TODO PostResponseDto에 isLike 부분 true로 처리
+            // PostResponseDto에 isLike 부분 true로 처리
             for(Post post:postList){
                 if(likeRepository.existsByAccountAndPost(account,post)){
                     result.add(new PostResponseDto(post,true));

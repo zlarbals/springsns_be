@@ -14,7 +14,7 @@ public class CommentResponseDto {
 
     public CommentResponseDto(Comment comment){
         this.id=comment.getId();
-        this.authorNickname=comment.getAuthorNickname();
+        this.authorNickname=comment.getAccount().getNickname();
         this.content=comment.getContent();
     }
 

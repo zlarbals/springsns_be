@@ -5,7 +5,9 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -22,17 +24,15 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "POST_ID")
     private Long id;
 
-    private String authorEmail;
-
-    private String authorNickname;
+    @ManyToOne
+    @JoinColumn(name = "ACCOUNT_ID")
+    private Account account;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
-
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-    private Set<Like> likes = new HashSet<>();
 
     private LocalDateTime postedAt;
 

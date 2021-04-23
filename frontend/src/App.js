@@ -13,6 +13,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     const user = cookie.getJSON("user");
+
     this.state = {
       user: user,
       showSignInModal: false,
@@ -80,19 +81,24 @@ class App extends Component {
   handleSignedOut() {
     console.log("Signed out happening...");
     const state = this.state;
-    const newState = Object.assign({}, state, { user: { loggedin: false } });
+    const newState = Object.assign({}, state, { user: null });
     this.setState(newState);
-    //cookie.set("user", null);
+    console.log("-----------------------");
+    console.log(this.state.user);
+    console.log(newState);
+    console.log("00000000000000000");
     cookie.remove("user");
     cookie.remove("X-AUTH-TOKEN");
-
-    window.location.href = "http://localhost:3000";
   }
 
   render() {
     let isLogin = true;
 
     const user = cookie.getJSON("user");
+
+    console.log("!!!!!!!!!!!!");
+    console.log(user);
+    console.log("@@@@@@@@@@@@@@@");
 
     if (user === undefined) {
       isLogin = false;
@@ -112,7 +118,8 @@ class App extends Component {
         <div className="container">
           <Router>
             <Navigation
-              user={this.state.user}
+              //user={this.state.user}
+              user={user}
               handleSignedOut={this.handleSignedOut}
               showModalWindow={this.showSignInModalWindow}
               showPostModalWindow={this.showPostModalWindow}

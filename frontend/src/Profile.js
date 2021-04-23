@@ -29,13 +29,13 @@ class Profile extends React.Component {
             <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
               내가 작성한 게시글 보기
               <span className="badge bg-primary rounded-pill">
-                {user.likeCount}
+                {user.postCounts}
               </span>
             </li>
             <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
               좋아요한 게시글 보기
               <span className="badge bg-primary rounded-pill">
-                {user.likeCount}
+                {user.likeCounts}
               </span>
             </li>
             {isEmailVerified ? (

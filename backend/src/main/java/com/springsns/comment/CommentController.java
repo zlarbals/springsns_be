@@ -1,6 +1,8 @@
 package com.springsns.comment;
 
 import com.springsns.Post.PostRepository;
+import com.springsns.account.AccountRepository;
+import com.springsns.domain.Account;
 import com.springsns.domain.Comment;
 import com.springsns.domain.Post;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class CommentController {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final CommentService commentService;
+    private final AccountRepository accountRepository;
 
     @GetMapping("/comment/post/{postId}")
     public ResponseEntity getPostComment(@PathVariable Long postId){
@@ -33,14 +36,14 @@ public class CommentController {
     @PostMapping("/comment/post/{postId}")
     public ResponseEntity createComment(@PathVariable Long postId, @RequestBody CommentForm commentForm, Principal principal){
         System.out.println("here is post com.springsns.comment");
-        Post post = postRepository.findById(postId).orElseThrow();
         String email = principal.getName();
+        Account account = accountRepository.findByEmail(email);
+        Post post = postRepository.findById(postId).orElseThrow();
 
         Comment comment = Comment.builder()
-                .authorEmail(email)
-                .authorNickname(commentForm.getAuthorNickname())
-                .content(commentForm.getContent())
+                .account(account)
                 .post(post)
+                .content(commentForm.getContent())
                 .postedAt(LocalDateTime.now())
                 .build();
 

@@ -40,16 +40,17 @@ public class PostController {
 
         //new post 생성.
         Post post = Post.builder()
-                .authorEmail(account.getEmail())
+                .account(account)
                 .content(postForm.getContent())
                 .postedAt(LocalDateTime.now())
-                .authorNickname(account.getNickname())
                 .build();
 
         //저장.
         Post newPost = postRepository.save(post);
 
-        return ResponseEntity.ok().body(newPost);
+        PostResponseDto postResponseDto = new PostResponseDto(newPost);
+
+        return ResponseEntity.ok().body(postResponseDto);
     }
 
     @GetMapping("/post")

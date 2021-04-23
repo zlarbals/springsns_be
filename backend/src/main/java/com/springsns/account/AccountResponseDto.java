@@ -14,17 +14,17 @@ public class AccountResponseDto {
 
     private boolean emailVerified;
 
-    private int likeCount;
+    private int likeCounts;
 
-    private int postCount;
+    private int postCounts;
 
     public AccountResponseDto(Account account){
         this.id=account.getId();
         this.email=account.getEmail();
         this.nickname=account.getNickname();
         this.emailVerified=account.isEmailVerified();
-        this.likeCount=account.getLikeCount();
-        this.postCount=account.getPostCount();
+        this.likeCounts=account.getLikes().size();
+        this.postCounts=account.getPosts().size();
     }
 
 }

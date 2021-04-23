@@ -20,16 +20,28 @@ import java.util.stream.Collectors;
 //callSuper = false가 기본 값, true인 경우 부모 클래스의 필드까지 감안.
 //of = "id"는 id로만 비교하도록 설정, rest api에서 복잡하면 무한루프가 발생할 수도 있다고함.
 @EqualsAndHashCode(of = "id")
-@Builder @AllArgsConstructor @NoArgsConstructor
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Account implements UserDetails {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ACCOUNT_ID")
     private Long id;
 
-    @Column(unique=true)
+    //내가 좋아요 한 게시글할 때 사용
+    @OneToMany(mappedBy = "account")
+    private List<Like> likes = new ArrayList<>();
+
+    //내가 쓴 포스트 할 때 사용.
+    @OneToMany(mappedBy = "account")
+    private List<Post> posts = new ArrayList<>();
+
+    @Column(unique = true)
     private String email;
 
-    @Column(unique=true)
+    @Column(unique = true)
     private String nickname;
 
     private String password;
@@ -42,20 +54,13 @@ public class Account implements UserDetails {
 
     private LocalDateTime joinedAt;
 
-    //좋아요 받은 총 갯수
-    private int likeCount;
-
-    //게시글 작성 총 갯수
-    private int postCount;
-
-
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default
     private List<String> roles = new ArrayList<>();
 
     public void generateEmailCheckToken() {
         //uuid를 통해 랜덤한 값 생성해서 저장하기
-        this.emailCheckToken= UUID.randomUUID().toString();
+        this.emailCheckToken = UUID.randomUUID().toString();
     }
 
     public boolean isValidToken(String token) {

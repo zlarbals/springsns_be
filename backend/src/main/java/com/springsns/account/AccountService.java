@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +44,8 @@ public class AccountService {
         //new account 만들기
         Account account = Account.builder()
                 .email(signUpForm.getEmail())
+                .likes(new ArrayList<>())
+                .posts(new ArrayList<>())
                 .nickname(signUpForm.getNickname())
                 .password(passwordEncoder.encode(signUpForm.getPassword()))   //패스워드 encoding.
                 .roles(Collections.singletonList("ROLE_USER")) //최초 가입시 USER로 설정

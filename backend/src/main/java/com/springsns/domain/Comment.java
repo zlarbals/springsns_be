@@ -18,15 +18,16 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String authorEmail;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ACCOUNT_ID")
+    private Account account;
 
-    private String authorNickname;
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name = "POST_ID")
+    private Post post;
 
     @Column(columnDefinition = "TEXT", nullable=false)
     private String content;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Post post;
 
     private LocalDateTime postedAt;
 

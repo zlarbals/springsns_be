@@ -5,7 +5,7 @@ import lombok.*;
 import javax.persistence.*;
 
 @Entity
-@Table(name="POST_LIKE")
+@Table(name = "LIKES")
 @NoArgsConstructor
 public class Like {
 
@@ -13,9 +13,11 @@ public class Like {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ACCOUNT_ID")
     private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "POST_ID")
     private Post post;
 
     public Like(Account account,Post post){
