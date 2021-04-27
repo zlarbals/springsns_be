@@ -31,9 +31,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)  //JWT 인증 이므로 세션 사용
                 .and()
                 .authorizeRequests()
-                .antMatchers("/users/signin", "/sign-up", "/check-email-token").permitAll()//모두 허용.
+                .antMatchers("/users/signin", "/sign-up", "/check-email-token","/h2-console/*").permitAll()//모두 허용.
                 .antMatchers(HttpMethod.GET, "/post").permitAll()//post 같은 경우 GET만 허용
                 .anyRequest().hasRole("USER")
+                .and()
+                .headers().frameOptions().disable()
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
     }

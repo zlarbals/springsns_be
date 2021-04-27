@@ -2,7 +2,7 @@ import React from "react";
 import cookie from "js-cookie";
 import PostCard from "./PostCard";
 
-class Posts extends React.Component {
+class MyPosts extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -14,7 +14,7 @@ class Posts extends React.Component {
   componentDidMount() {
     const JWT = cookie.getJSON("X-AUTH-TOKEN");
 
-    fetch("/post", {
+    fetch("/post/my", {
       method: "GET",
       headers: {
         "X-AUTH-TOKEN": JWT,
@@ -26,13 +26,12 @@ class Posts extends React.Component {
           posts: json,
         });
       });
-    //getPost(this.setPosts);
   }
 
   componentDidUpdate() {
     const JWT = cookie.getJSON("X-AUTH-TOKEN");
 
-    fetch("/post", {
+    fetch("/post/my", {
       method: "GET",
       headers: {
         "X-AUTH-TOKEN": JWT,
@@ -56,7 +55,7 @@ class Posts extends React.Component {
 
   render() {
     const posts = this.state.posts;
-    const place = "/";
+    const place = "/posts/my";
     console.log(posts);
 
     let post = posts.map((post, index) => (
@@ -82,4 +81,4 @@ class Posts extends React.Component {
   }
 }
 
-export default Posts;
+export default MyPosts;

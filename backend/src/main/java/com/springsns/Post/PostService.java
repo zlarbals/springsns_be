@@ -20,7 +20,7 @@ public class PostService {
     private final LikeRepository likeRepository;
 
     @Transactional(readOnly = true)
-    public List<PostResponseDto> findAllPosts(String email) {
+    public List<PostResponseDto> getAllPosts(String email) {
 
         List<PostResponseDto> result = new ArrayList<>();
         //List<Post> postList = postRepository.findAllPosts();

@@ -8,8 +8,8 @@ class Navigation extends React.Component {
     this.handleSignOut = this.handleSignOut.bind(this);
   }
 
-  handleSignOut(e) {
-    e.preventDefault();
+  handleSignOut() {
+    //e.preventDefault();
     const user = cookie.getJSON("user");
     if (user === undefined) {
       console.log("Can't sign out as no user cookie found...");

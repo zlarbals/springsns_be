@@ -1,8 +1,9 @@
 import { React, Component } from "react";
 import Navigation from "./Navigation.js";
 import { Route, BrowserRouter as Router } from "react-router-dom";
-import Configuration from "./Configuration.js";
 import Posts from "./Posts.js";
+import MyPosts from "./MyPosts";
+import LikePosts from "./LikePosts";
 import Profile from "./Profile";
 import ModalWindow from "./modalwindow";
 import PostModalWindow from "./postmodalwindow";
@@ -127,16 +128,21 @@ class App extends Component {
 
             <div className="row">
               <div className="col-md-3">
-                <Profile />
+                <Profile
+                  handleSignedOut={this.handleSignedOut}
+                  showModalWindow={this.showSignInModalWindow}
+                  showPostModalWindow={this.showPostModalWindow}
+                />
               </div>
 
               {/* <div className="col-md-1"></div> */}
 
               <div className="col-md-9">
                 <Route exact path="/" component={Posts} />
-                {/* <Route path="/Login" component={Login} /> */}
-                <Route path="/Configuration" component={Configuration} />
+
                 <Route path="/check-email-token" component={EmailCheck} />
+                <Route exact path="/posts/my" component={MyPosts} />
+                <Route exact path="/posts/my/like" component={LikePosts} />
               </div>
             </div>
 

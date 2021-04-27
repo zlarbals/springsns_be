@@ -30,11 +30,9 @@ public class Account implements UserDetails {
     @Column(name = "ACCOUNT_ID")
     private Long id;
 
-    //내가 좋아요 한 게시글할 때 사용
     @OneToMany(mappedBy = "account")
     private List<Like> likes = new ArrayList<>();
 
-    //내가 쓴 포스트 할 때 사용.
     @OneToMany(mappedBy = "account")
     private List<Post> posts = new ArrayList<>();
 

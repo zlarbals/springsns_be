@@ -7,9 +7,12 @@ function submitRequest(path, requestBody, handlePost, handleError) {
 
   const formData = new FormData();
   console.log(requestBody.content);
-  console.log(document.getElementById("file").files[0]);
+  const file = document.getElementById("file").files[0];
+  console.log(file);
   formData.append("content", requestBody.content);
-  formData.append("file", document.getElementById("file").files[0]);
+  if (file !== undefined) {
+    formData.append("file", file);
+  }
 
   fetch(path, {
     method: "POST",
