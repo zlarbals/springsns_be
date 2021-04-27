@@ -5,14 +5,21 @@ import cookie from "js-cookie";
 function submitRequest(path, requestBody, handlePost, handleError) {
   const JWT = cookie.getJSON("X-AUTH-TOKEN");
 
+  const formData = new FormData();
+  console.log(requestBody.content);
+  console.log(document.getElementById("file").files[0]);
+  formData.append("content", requestBody.content);
+  formData.append("file", document.getElementById("file").files[0]);
+
   fetch(path, {
     method: "POST",
     headers: {
       Accept: "application/json",
-      "content-Type": "application/json",
+      // "content-Type": "application/json",
       "X-AUTH-TOKEN": JWT,
     },
-    body: JSON.stringify(requestBody),
+    //body: JSON.stringify(requestBody),
+    body: formData,
   })
     .then((response) => response.json())
     .then((json) => {
@@ -79,6 +86,14 @@ class PostForm extends React.Component {
               id="content"
               onChange={this.handleChange}
             />
+            <input
+              name="file"
+              type="file"
+              className="form-contorl"
+              id="file"
+              onChange={this.handleChange}
+            />
+
             <div className="col-12 mt-2">
               <button type="submit" className="btn btn-success btn-large">
                 작성 완료

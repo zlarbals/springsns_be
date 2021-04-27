@@ -27,12 +27,15 @@ public class Post {
     @Column(name = "POST_ID")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ACCOUNT_ID")
     private Account account;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
+
+    @OneToOne
+    private PostFile postFile;
 
     private LocalDateTime postedAt;
 

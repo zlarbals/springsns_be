@@ -14,11 +14,18 @@ public class PostResponseDto {
 
     private boolean isLike;
 
+    private boolean isExistFile;
+
     public PostResponseDto(Post post){
         this.id=post.getId();
         this.authorNickname=post.getAccount().getNickname();
         this.content=post.getContent();
         this.isLike=false;
+        if(post.getPostFile()==null){
+            this.isExistFile=false;
+        }else{
+            this.isExistFile=true;
+        }
     }
 
     public PostResponseDto(Post post,boolean isLike){
@@ -26,6 +33,11 @@ public class PostResponseDto {
         this.authorNickname=post.getAccount().getNickname();
         this.content=post.getContent();
         this.isLike=isLike;
+        if(post.getPostFile()==null){
+            this.isExistFile=false;
+        }else{
+            this.isExistFile=true;
+        }
     }
 
 }

@@ -1,15 +1,20 @@
 package com.springsns.Post;
 
+import com.springsns.PostFile.PostFileService;
+import com.springsns.Util.MD5Generator;
 import com.springsns.account.AccountRepository;
 import com.springsns.domain.Account;
 import com.springsns.domain.Post;
+import com.springsns.domain.PostFile;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.security.MD5Encoder;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -23,11 +28,12 @@ public class PostController {
     private final AccountRepository accountRepository;
     private final PostRepository postRepository;
     private final PostService postService;
+    private final PostFileService postFileService;
 
     //@Controller로 선언된 bean 객체에서는 메서드 인자로 Principal 객체에 직접 접근할 수 있는 추가적인 옵션이 있다.
     //현재 인증된 사용자의 정보를 Principal로 직접 접근할 수 있다.
     @PostMapping("/post")
-    public ResponseEntity registerPost(@RequestBody PostForm postForm, Principal principal) {
+    public ResponseEntity registerPost(@RequestPart MultipartFile file,@RequestParam String content, Principal principal) throws IOException, NoSuchAlgorithmException {
         System.out.println("here is post /post");
         String email = principal.getName();
 
@@ -38,10 +44,20 @@ public class PostController {
             return ResponseEntity.badRequest().build();
         }
 
+        PostFile postFile = null;
+        if(!file.isEmpty()){
+            postFile=postFileService.processPostFile(file);
+        }
+
+//        if(!file.isEmpty()){
+//            postFile = postFileService.processPostFile(file);
+//        }
+
         //new post 생성.
         Post post = Post.builder()
                 .account(account)
-                .content(postForm.getContent())
+                .content(content)
+                .postFile(postFile)
                 .postedAt(LocalDateTime.now())
                 .build();
 
