@@ -36,7 +36,12 @@ function submitRequest(path, requestBody, handlePost, handleError) {
         handleError(json.error);
       }
     })
-    .catch((error) => console.log(error));
+    .catch((error) => {
+      if (error.statusCode === 403) {
+        alert("다시 로그인 하세요.");
+        //this.props.history.push("/");
+      }
+    });
 }
 
 class PostForm extends React.Component {
@@ -98,7 +103,7 @@ class PostForm extends React.Component {
             />
 
             <div className="col-12 mt-2">
-              <button type="submit" className="btn btn-success btn-large">
+              <button type="submit" className="btn btn-primary btn-large">
                 작성 완료
               </button>
             </div>
@@ -124,7 +129,7 @@ export default class PostModalWindow extends React.Component {
       >
         <div role="document">
           <ModalHeader
-            className="bg-success text-white"
+            className="bg-primary text-white"
             toggle={this.props.toggle}
           >
             Spring SNS

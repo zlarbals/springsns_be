@@ -5,121 +5,96 @@ import Posts from "./Posts.js";
 import MyPosts from "./MyPosts";
 import LikePosts from "./LikePosts";
 import Profile from "./Profile";
-import ModalWindow from "./modalwindow";
-import PostModalWindow from "./postmodalwindow";
+import LoginModalWindow from "./LoginModalWindow";
+import PostModalWindow from "./PostModalWindow";
 import EmailCheck from "./EmailCheck";
 import cookie from "js-cookie";
 
 class App extends Component {
   constructor(props) {
     super(props);
-    const user = cookie.getJSON("user");
 
     this.state = {
-      user: user,
       showSignInModal: false,
       showPostModal: false,
+      showCommentModal: false,
     };
 
-    this.handleSignedIn = this.handleSignedIn.bind(this);
-    this.handleSignedOut = this.handleSignedOut.bind(this);
     this.showSignInModalWindow = this.showSignInModalWindow.bind(this);
     this.toggleSignInModalWindow = this.toggleSignInModalWindow.bind(this);
+    this.handleSignedIn = this.handleSignedIn.bind(this);
+    this.handleSignedOut = this.handleSignedOut.bind(this);
     this.showPostModalWindow = this.showPostModalWindow.bind(this);
     this.togglePostModalWindow = this.togglePostModalWindow.bind(this);
-    this.showPostModalWindow = this.showPostModalWindow.bind(this);
     this.handlePost = this.handlePost.bind(this);
   }
 
-  showPostModalWindow() {
-    const state = this.state;
-    const newState = Object.assign({}, state, { showPostModal: true });
-    this.setState(newState);
-  }
-
-  togglePostModalWindow() {
-    const state = this.state;
-    const newState = Object.assign({}, state, {
-      showPostModal: !state.showPostModal,
-    });
-    this.setState(newState);
-  }
-
   showSignInModalWindow() {
-    const state = this.state;
-    const newState = Object.assign({}, state, { showSignInModal: true });
+    const newState = Object.assign(this.state, { showSignInModal: true });
     this.setState(newState);
   }
 
   toggleSignInModalWindow() {
-    const state = this.state;
-    const newState = Object.assign({}, state, {
-      showSignInModal: !state.showSignInModal,
+    const newState = Object.assign(this.state, {
+      showSignInModal: !this.state.showSignInModal,
     });
     this.setState(newState);
   }
 
-  handleSignedIn(user) {
-    console.log("Sign in happening...");
-    const state = this.state;
-
-    //user 객체의 속성 복사
-    const newState = Object.assign({}, state, {
-      user: user,
+  handleSignedIn() {
+    const newState = Object.assign(this.state, {
       showSignInModal: false,
+    });
+    this.setState(newState);
+  }
+
+  handleSignedOut() {
+    const newState = Object.assign(this.state, {
+      showSignInModal: false,
+      showPostModal: false,
+    });
+    this.setState(newState);
+    cookie.remove("user");
+    cookie.remove("X-AUTH-TOKEN");
+  }
+
+  showPostModalWindow() {
+    const newState = Object.assign(this.state, { showPostModal: true });
+    this.setState(newState);
+  }
+
+  togglePostModalWindow() {
+    const newState = Object.assign(this.state, {
+      showPostModal: !this.state.showPostModal,
     });
     this.setState(newState);
   }
 
   handlePost() {
-    console.log("post happening....");
-    const state = this.state;
-
-    const newState = Object.assign({}, state, { showPostModal: false });
+    const newState = Object.assign(this.state, { showPostModal: false });
     this.setState(newState);
-  }
-
-  handleSignedOut() {
-    console.log("Signed out happening...");
-    const state = this.state;
-    const newState = Object.assign({}, state, { user: null });
-    this.setState(newState);
-    console.log("-----------------------");
-    console.log(this.state.user);
-    console.log(newState);
-    console.log("00000000000000000");
-    cookie.remove("user");
-    cookie.remove("X-AUTH-TOKEN");
   }
 
   render() {
     let isLogin = true;
-
     const user = cookie.getJSON("user");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
 
-    console.log("!!!!!!!!!!!!");
-    console.log(user);
-    console.log("@@@@@@@@@@@@@@@");
-
-    if (user === undefined) {
+    if (user === undefined || jwt === undefined) {
       isLogin = false;
     }
-
-    console.log("here is App.js");
 
     return (
       <>
         {isLogin === true && user.emailVerified === false && (
           <span className="d-block p-2 bg-primary text-white">
-            이메일 인증을 하셔야 게시글을 작성할 수 있습니다. Configuration에서
-            인증 이메일을 재전송 할 수 있습니다.
+            이메일 인증 후 게시글을 작성할 수 있습니다.
           </span>
         )}
 
         <div className="container">
           <Router>
             <Navigation
-              //user={this.state.user}
               user={user}
               handleSignedOut={this.handleSignedOut}
               showModalWindow={this.showSignInModalWindow}
@@ -135,8 +110,6 @@ class App extends Component {
                 />
               </div>
 
-              {/* <div className="col-md-1"></div> */}
-
               <div className="col-md-9">
                 <Route exact path="/" component={Posts} />
 
@@ -146,10 +119,7 @@ class App extends Component {
               </div>
             </div>
 
-            {/* //우선은 나눠서 모달창 구현하고 후에 합치자.
-              //props에 구별할수 있는 부분을 넣어주면 부품처럼 갈아끼워서 사용가능하다.
-              //example post=true, signin=false  /  post=false,signin=true */}
-            <ModalWindow
+            <LoginModalWindow
               handleSignedIn={this.handleSignedIn}
               showModal={this.state.showSignInModal}
               toggle={this.toggleSignInModalWindow}

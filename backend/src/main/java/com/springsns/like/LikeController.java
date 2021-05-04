@@ -2,6 +2,7 @@ package com.springsns.like;
 
 import com.springsns.account.AccountRepository;
 import com.springsns.domain.Account;
+import com.springsns.domain.Like;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,11 @@ public class LikeController {
 
         String email = principal.getName();
 
-        likeService.addLike(email,postId);
+        boolean result = likeService.addLike(email,postId);
+
+        if(!result){
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
 
         return new ResponseEntity(HttpStatus.OK);
     }

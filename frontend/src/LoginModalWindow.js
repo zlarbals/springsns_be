@@ -122,17 +122,17 @@ class SignInForm extends React.Component {
           </div>
           <div className="form-row text-center">
             <div className="col-12 mt-2">
-              <button type="submit" className="btn btn-success btn-large">
+              <button type="submit" className="btn btn-primary btn-large">
                 Sign In
               </button>
             </div>
             <div className="col-12 mt-2">
               <button
                 type="submit"
-                className="btn btn-link text-info"
+                className="btn btn-link"
                 onClick={() => this.props.handleNewUser()}
               >
-                New User? Register
+                회원 가입
               </button>
             </div>
           </div>
@@ -256,7 +256,7 @@ class SignUpForm extends React.Component {
           </div>
           <div className="form-row text-center">
             <div className="col-12 mt-2">
-              <button type="submit" className="btn btn-success btn-large">
+              <button type="submit" className="btn btn-primary btn-large">
                 SignUp
               </button>
             </div>
@@ -267,7 +267,7 @@ class SignUpForm extends React.Component {
   }
 }
 
-export default class ModalWindow extends React.Component {
+export default class LoginModalWindow extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -313,7 +313,7 @@ export default class ModalWindow extends React.Component {
         <div role="document">
           <ModalHeader
             toggle={this.props.toggle}
-            className="bg-success text-white"
+            className="bg-primary text-white"
           >
             Spring SNS
           </ModalHeader>

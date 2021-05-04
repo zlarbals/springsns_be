@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,8 +31,10 @@ public class CommentController {
         System.out.println("here is get com.springsns.comment");
 
         List<CommentResponseDto> result=commentService.findAllComments(postId);
+        Map<String,Object> resultMap=new HashMap<>();
+        resultMap.put("comments",result);
 
-        return new ResponseEntity(result, HttpStatus.OK);
+        return ResponseEntity.ok().body(resultMap);
     }
 
     @PostMapping("/comment/post/{postId}")

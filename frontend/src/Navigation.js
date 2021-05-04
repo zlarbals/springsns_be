@@ -6,29 +6,36 @@ class Navigation extends React.Component {
   constructor(props) {
     super(props);
     this.handleSignOut = this.handleSignOut.bind(this);
+    this.alertEmailVerify = this.alertEmailVerify.bind(this);
   }
 
-  handleSignOut() {
-    //e.preventDefault();
-    const user = cookie.getJSON("user");
-    if (user === undefined) {
-      console.log("Can't sign out as no user cookie found...");
-      return;
-    }
+  alertEmailVerify(event) {
+    event.preventDefault();
 
-    console.log("Sign out: " + user);
+    const JWT = cookie.getJSON("X-AUTH-TOKEN");
+
+    if (JWT === undefined) {
+      alert("로그인을 하셔야 이용할 수 있습니다.");
+    } else {
+      alert("이메일 인증을 하셔야 이용할 수 있습니다.");
+    }
+  }
+
+  handleSignOut(event) {
+    event.preventDefault();
     this.props.handleSignedOut();
-    console.log("Handle Sign out");
   }
 
   render() {
-    let isLogin = false;
-    let emailVerified = false;
+    let isLogin = true;
+    let emailVerified = true;
 
     const user = cookie.getJSON("user");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
 
-    if (user !== undefined) {
-      isLogin = true;
+    if (user === undefined || jwt === undefined) {
+      isLogin = false;
+    } else {
       emailVerified = user.emailVerified;
     }
 
@@ -44,11 +51,11 @@ class Navigation extends React.Component {
                   console.log("show called");
                 }}
               >
-                Login
+                로그인
               </Link>
             ) : (
               <Link to="/" onClick={this.handleSignOut}>
-                Logout
+                로그아웃
               </Link>
             )}
           </li>
@@ -59,41 +66,17 @@ class Navigation extends React.Component {
           </li>
           {emailVerified === true ? (
             <li className="nav-link">
-              <Link
-                to="/"
-                onClick={() => {
-                  this.props.showPostModalWindow();
-                  console.log("post modal called");
-                }}
-              >
+              <Link to="/" onClick={this.props.showPostModalWindow}>
                 게시글 작성
               </Link>
             </li>
           ) : (
-            <li className="nav-link disabled">
-              <Link
-                to="/"
-                onClick={() => {
-                  this.props.showPostModalWindow();
-                  console.log("post modal called");
-                }}
-              >
+            <li className="nav-link">
+              <Link to="/" onClick={this.alertEmailVerify}>
                 게시글 작성
               </Link>
             </li>
           )}
-          {/* <li className="nav-link">
-            {emailVerified === true && (
-              <Link
-                onClick={() => {
-                  this.props.showPostModalWindow();
-                  console.log("post modal called");
-                }}
-              >
-                게시글 작성
-              </Link>
-            )}
-          </li> */}
         </ul>
       </div>
     );

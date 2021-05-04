@@ -1,29 +1,21 @@
 package com.springsns.Post;
 
-import com.springsns.PostFile.PostFileService;
-import com.springsns.Util.MD5Generator;
 import com.springsns.account.AccountRepository;
 import com.springsns.domain.Account;
 import com.springsns.domain.Like;
 import com.springsns.domain.Post;
-import com.springsns.domain.PostFile;
 import com.springsns.like.LikeRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.security.MD5Encoder;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.support.SimpleTriggerContext;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,7 +24,6 @@ public class PostController {
     private final AccountRepository accountRepository;
     private final PostRepository postRepository;
     private final PostService postService;
-    private final PostFileService postFileService;
     private final LikeRepository likeRepository;
 
     //@Controller로 선언된 bean 객체에서는 메서드 인자로 Principal 객체에 직접 접근할 수 있는 추가적인 옵션이 있다.
@@ -50,8 +41,9 @@ public class PostController {
         }
 
         PostFile postFile = null;
+
         if(file!=null){
-            postFile=postFileService.processPostFile(file);
+            postFile=postService.processPostFile(file);
         }
 
         //new post 생성.

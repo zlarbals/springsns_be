@@ -1,14 +1,11 @@
 package com.springsns.domain;
 
 
+import com.springsns.Post.PostFile;
 import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
@@ -19,7 +16,7 @@ import java.util.Set;
 @EqualsAndHashCode(of = "id")
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post {
 
     @Id
@@ -34,7 +31,7 @@ public class Post {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @OneToOne
+    @Embedded
     private PostFile postFile;
 
     private LocalDateTime postedAt;

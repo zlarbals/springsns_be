@@ -8,34 +8,25 @@ class Profile extends React.Component {
     this.handleSignOut = this.handleSignOut.bind(this);
   }
 
-  handleSignOut(e) {
-    e.preventDefault();
-    const user = Cookies.getJSON("user");
-    if (user === undefined) {
-      console.log("Can't sign out as no user cookie found...");
-      return;
-    }
-
-    console.log("Sign out: " + user);
+  handleSignOut(event) {
+    event.preventDefault();
     this.props.handleSignedOut();
-    console.log("Handle Sign out");
   }
 
   render() {
     const user = Cookies.getJSON("user");
+    const jwt = Cookies.getJSON("X-AUTH-TOKEN");
 
     let isLogin = false;
     let greetingMessage = "게시글 작성에는 로그인이 필요합니다.";
     let name;
     let isEmailVerified;
-    if (user !== undefined) {
+    if (user !== undefined && jwt !== undefined) {
       isLogin = true;
       greetingMessage = "환영합니다. ";
       name = user.nickname + "님!";
       isEmailVerified = user.emailVerified;
     }
-
-    console.log(user);
 
     return (
       <div className="card border-primary mb-5">
@@ -47,15 +38,9 @@ class Profile extends React.Component {
           <ul className="list-group list-group-flush">
             <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
               <Link to="/posts/my">내가 작성한 게시글 보기</Link>
-              <span className="badge bg-primary rounded-pill">
-                {user.postCounts}
-              </span>
             </li>
             <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
               <Link to="/posts/my/like">좋아요한 게시글 보기</Link>
-              <span className="badge bg-primary rounded-pill">
-                {user.likeCounts}
-              </span>
             </li>
             {isEmailVerified ? (
               <li className="list-group-item list-group-item-action">

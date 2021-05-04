@@ -25,6 +25,12 @@ class Posts extends React.Component {
         this.setState({
           posts: json,
         });
+      })
+      .catch((error) => {
+        if (error.statusCode === 403) {
+          alert("다시 로그인 하세요.");
+          this.props.history.push("/");
+        }
       });
     //getPost(this.setPosts);
   }
@@ -44,6 +50,12 @@ class Posts extends React.Component {
           this.setState({
             posts: json,
           });
+        }
+      })
+      .catch((error) => {
+        if (error.statusCode === 403) {
+          alert("다시 로그인 하세요.");
+          this.props.history.push("/");
         }
       });
   }
@@ -65,6 +77,7 @@ class Posts extends React.Component {
         post={post}
         history={this.props.history}
         place={place}
+        showCommentModalWindow={this.props.showCommentModalWindow}
       />
     ));
 

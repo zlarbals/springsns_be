@@ -25,6 +25,12 @@ class MyPosts extends React.Component {
         this.setState({
           posts: json,
         });
+      })
+      .catch((error) => {
+        if (error.statusCode === 403) {
+          alert("다시 로그인 하세요.");
+          this.props.history.push("/");
+        }
       });
   }
 
@@ -43,6 +49,12 @@ class MyPosts extends React.Component {
           this.setState({
             posts: json,
           });
+        }
+      })
+      .catch((error) => {
+        if (error.statusCode === 403) {
+          alert("다시 로그인 하세요.");
+          this.props.history.push("/");
         }
       });
   }

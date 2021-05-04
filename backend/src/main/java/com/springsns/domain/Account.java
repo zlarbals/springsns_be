@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(of = "id")
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Account implements UserDetails {
 
     @Id

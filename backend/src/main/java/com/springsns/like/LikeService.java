@@ -17,9 +17,15 @@ public class LikeService {
     private final PostRepository postRepository;
     private final AccountRepository accountRepository;
 
-    public void addLike(String email, Long postId){
-        Post post = postRepository.findById(postId).orElseThrow();
+    public boolean addLike(String email, Long postId){
+
         Account account = accountRepository.findByEmail(email);
+
+        if(!account.isEmailVerified()){
+            return false;
+        }
+
+        Post post = postRepository.findById(postId).orElseThrow();
 
         Like like = likeRepository.findByAccountAndPost(account,post);
 
@@ -30,5 +36,7 @@ public class LikeService {
             //좋아요 취소하기 위해 누른 경우
             likeRepository.delete(like);
         }
+
+        return true;
     }
 }

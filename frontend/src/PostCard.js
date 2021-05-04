@@ -9,43 +9,79 @@ import {
 } from "reactstrap";
 import cookie from "js-cookie";
 
-function postAddLike(path) {
-  console.log(path);
-  const JWT = cookie.getJSON("X-AUTH-TOKEN");
-
+function postAddLike(path, JWT, history, place) {
   fetch(path, {
     method: "POST",
     headers: {
-      // Accept: "application/json",
-      // "content-Type": "application/json",
+      "content-Type": "application/json",
       "X-AUTH-TOKEN": JWT,
     },
-    // body: JSON.stringify(requestBody),
   })
     .then((response) => {
-      console.log("hrere is post like here is maybe success");
+      if (response.status === 403) {
+        alert("다시 로그인 하세요.");
+        history.push("/");
+        throw new Error("403 error");
+      }
     })
     .catch((error) => {
-      console.log("here is post like error");
-      console.log(error);
+      alert("좋아요 등록에 실패했습니다.");
     });
+
+  history.push(place);
 }
 
-function getComments(path, setComments) {
-  const JWT = cookie.getJSON("X-AUTH-TOKEN");
-  console.log(path);
+function getComments(path, JWT, setComments, history) {
   fetch(path, {
     method: "GET",
     headers: {
+      Accept: "application/json",
       "X-AUTH-TOKEN": JWT,
     },
   })
+    .then((response) => {
+      if (response.status === 403) {
+        alert("다시 로그인 하세요.");
+        //history.push("/");
+        throw new Error("403 error");
+      }
+      return response.json();
+    })
+    .then((json) => {
+      setComments(json.comments);
+    })
+    .catch((error) => {
+      console.log(error);
+      alert("댓글 가져오기에 실패했습니다.");
+    });
+
+  history.push("/");
+}
+
+function submitComment(path, JWT, handleContent, requestBody, history) {
+  fetch(path, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "content-Type": "application/json",
+      "X-AUTH-TOKEN": JWT,
+    },
+    body: JSON.stringify(requestBody),
+  })
     .then((response) => response.json())
     .then((json) => {
-      console.log("here is getComments success");
+      console.log("Response received....");
       console.log(json);
-      setComments(json);
-    });
+      if (json.error === undefined || !json.error) {
+        console.log(json);
+      } else {
+        console.log("Sign in error here");
+      }
+    })
+    .catch((error) => console.log(error));
+
+  handleContent();
+  history.push("/");
 }
 
 class PostCard extends React.Component {
@@ -54,24 +90,65 @@ class PostCard extends React.Component {
     this.state = {
       comments: [],
       isCommentsOpen: false,
+      content: "",
     };
     this.handleLike = this.handleLike.bind(this);
     this.showComments = this.showComments.bind(this);
     this.setComments = this.setComments.bind(this);
     this.closeComments = this.closeComments.bind(this);
+    this.handleInputComment = this.handleInputComment.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleContent = this.handleContent.bind(this);
   }
 
   handleLike(post) {
-    const path = "/like/" + post.id;
-    postAddLike(path);
-    console.log("here is history start");
-    //this.props.history.push("/");
-    this.props.history.push(this.props.place);
+    const user = cookie.getJSON("user");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
+
+    if (user === undefined || jwt === undefined) {
+      alert("로그인 후 이용해주세요.");
+    } else if (user.emailVerified === false) {
+      alert("이메일 인증 후 이용해주세요.");
+    } else {
+      const path = "/like/" + post.id;
+      postAddLike(path, jwt, this.props.history, this.props.place);
+    }
   }
 
-  showComments(post) {
-    const path = "/comment/post/" + post.id;
-    getComments(path, this.setComments);
+  showComments(event) {
+    event.preventDefault();
+    const user = cookie.getJSON("user");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
+
+    if (user === undefined || jwt === undefined) {
+      alert("로그인 후 이용해주세요.");
+    } else if (user.emailVerified === false) {
+      alert("이메일 인증 후 이용해주세요.");
+    } else {
+      const path = "/comment/post/" + this.props.post.id;
+      getComments(path, jwt, this.setComments, this.props.history);
+    }
+  }
+
+  handleInputComment(event) {
+    event.preventDefault();
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
+    const path = "/comment/post/" + this.props.post.id;
+
+    console.log(this.state);
+
+    submitComment(
+      path,
+      jwt,
+      this.handleContent,
+      this.state,
+      this.props.history
+    );
+
+    if (this.state.isCommentsOpen === true) {
+      const getCommentsPath = "/comment/post/" + this.props.post.id;
+      getComments(getCommentsPath, jwt, this.setComments, this.props.history);
+    }
   }
 
   closeComments() {
@@ -83,7 +160,21 @@ class PostCard extends React.Component {
   setComments(comments) {
     this.setState({
       comments: comments,
-      isCommentsOpen: !this.state.isCommentsOpen,
+      isCommentsOpen: true,
+    });
+  }
+
+  handleChange(event) {
+    const name = event.target.name;
+    const value = event.target.value;
+    this.setState({
+      [name]: value,
+    });
+  }
+
+  handleContent() {
+    this.setState({
+      content: "",
     });
   }
 
@@ -97,7 +188,9 @@ class PostCard extends React.Component {
           <CardText>{post.content}</CardText>
           <Button
             onClick={() => this.handleLike(post)}
-            className="border border-danger reounded-pill bg-white text-danger mr-2"
+            className="mr-2"
+            outline
+            color="danger"
           >
             {post.like === true ? (
               <svg
@@ -128,21 +221,46 @@ class PostCard extends React.Component {
             좋아요
           </Button>
           {this.state.isCommentsOpen === true ? (
-            <Button onClick={() => this.closeComments()} color="primary">
+            <Button onClick={this.closeComments} outline color="primary">
               댓글 접기
             </Button>
           ) : (
-            <Button onClick={() => this.showComments(post)} color="primary">
+            <Button onClick={this.showComments} outline color="primary">
               댓글 보기
             </Button>
           )}
         </CardBody>
         {this.state.isCommentsOpen === true &&
-          this.state.comments.map((comment) => (
-            <CardFooter key={comment.id}>
-              {comment.authorNickname} : {comment.content}
-            </CardFooter>
+          (this.state.comments.length !== 0 ? (
+            this.state.comments.map((comment) => (
+              <CardFooter key={comment.id}>
+                {comment.authorNickname} : {comment.content}
+              </CardFooter>
+            ))
+          ) : (
+            <CardFooter>작성된 댓글이 없습니다.</CardFooter>
           ))}
+
+        <CardFooter>
+          <form onSubmit={this.handleInputComment}>
+            <h5 className="mb-4">댓글 작성</h5>
+            <div className="form-group">
+              <input
+                name="content"
+                type="text"
+                className="form-control"
+                id="content"
+                value={this.state.content}
+                onChange={this.handleChange}
+              />
+              <div className="col-12 mt-2">
+                <button type="submit" className="btn btn-primary btn-large">
+                  작성 완료
+                </button>
+              </div>
+            </div>
+          </form>
+        </CardFooter>
       </Card>
     );
   }

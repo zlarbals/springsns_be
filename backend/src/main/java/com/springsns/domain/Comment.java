@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(of="id")
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Comment {
 
     @Id

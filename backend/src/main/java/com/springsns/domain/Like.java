@@ -6,7 +6,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "LIKES")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Like {
 
