@@ -37,22 +37,15 @@ function submitSignUpRequest(path, requestBody, handleError, showSignInModal) {
     },
     body: JSON.stringify(requestBody),
   })
-    .then((response) => {
-      console.log(response);
-      if (response.json.status !== 200) {
-        throw new Error(response.json().error);
+    .then((response) => response.json)
+    .then((json) => {
+      if (json.error === undefined || !json.error) {
+        showSignInModal();
+      } else {
+        handleError(json.error);
       }
-
-      showSignInModal();
-      //return response.json();
     })
-    // .then((json) => {
-    //   showSignInModal();
-    // })
-    .catch((error) => {
-      console.log(error);
-      handleError(error);
-    });
+    .catch((error) => console.log(error));
 }
 
 class SignInForm extends React.Component {
