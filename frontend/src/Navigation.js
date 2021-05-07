@@ -2,41 +2,47 @@ import React from "react";
 import { Link } from "react-router-dom";
 import cookie from "js-cookie";
 
+function checkCookieLoginData(jwt, user) {
+  if (user === undefined || jwt === undefined) {
+    alert("로그인 후 이용해주세요.");
+    return false;
+  } else if (user.emailVerified === false) {
+    alert("이메일 인증 후 이용해주세요.");
+    return false;
+  } else {
+    return true;
+  }
+}
+
 class Navigation extends React.Component {
   constructor(props) {
     super(props);
     this.handleSignOut = this.handleSignOut.bind(this);
-    this.alertEmailVerify = this.alertEmailVerify.bind(this);
+    this.showPostModalWindow = this.showPostModalWindow.bind(this);
   }
 
-  alertEmailVerify(event) {
-    event.preventDefault();
-
-    const JWT = cookie.getJSON("X-AUTH-TOKEN");
-
-    if (JWT === undefined) {
-      alert("로그인을 하셔야 이용할 수 있습니다.");
-    } else {
-      alert("이메일 인증을 하셔야 이용할 수 있습니다.");
-    }
-  }
-
-  handleSignOut(event) {
-    event.preventDefault();
+  handleSignOut() {
     this.props.handleSignedOut();
+  }
+
+  showPostModalWindow(event) {
+    event.preventDefault();
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
+    const user = cookie.getJSON("user");
+
+    if (checkCookieLoginData(jwt, user)) {
+      this.props.showPostModalWindow();
+    }
   }
 
   render() {
     let isLogin = true;
-    let emailVerified = true;
 
     const user = cookie.getJSON("user");
     const jwt = cookie.getJSON("X-AUTH-TOKEN");
 
     if (user === undefined || jwt === undefined) {
       isLogin = false;
-    } else {
-      emailVerified = user.emailVerified;
     }
 
     return (
@@ -44,13 +50,7 @@ class Navigation extends React.Component {
         <ul className="nav justify-content-center">
           <li className="nav-link">
             {isLogin === false ? (
-              <Link
-                to="/"
-                onClick={() => {
-                  this.props.showModalWindow();
-                  console.log("show called");
-                }}
-              >
+              <Link to="/" onClick={this.props.showModalWindow}>
                 로그인
               </Link>
             ) : (
@@ -64,19 +64,11 @@ class Navigation extends React.Component {
               <Link to="/">Spring SNS</Link>
             </h5>
           </li>
-          {emailVerified === true ? (
-            <li className="nav-link">
-              <Link to="/" onClick={this.props.showPostModalWindow}>
-                게시글 작성
-              </Link>
-            </li>
-          ) : (
-            <li className="nav-link">
-              <Link to="/" onClick={this.alertEmailVerify}>
-                게시글 작성
-              </Link>
-            </li>
-          )}
+          <li className="nav-link">
+            <Link to="/" onClick={this.showPostModalWindow}>
+              게시글 작성
+            </Link>
+          </li>
         </ul>
       </div>
     );

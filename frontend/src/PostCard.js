@@ -9,8 +9,8 @@ import {
 } from "reactstrap";
 import cookie from "js-cookie";
 
-function postAddLike(path, JWT, history, place) {
-  fetch(path, {
+async function postAddLike(path, JWT, history, place) {
+  await fetch(path, {
     method: "POST",
     headers: {
       "content-Type": "application/json",
@@ -19,8 +19,7 @@ function postAddLike(path, JWT, history, place) {
   })
     .then((response) => {
       if (response.status === 403) {
-        alert("다시 로그인 하세요.");
-        history.push("/");
+        alert("다시 로그인 후 이용해주세요.");
         throw new Error("403 error");
       }
     })
@@ -31,8 +30,8 @@ function postAddLike(path, JWT, history, place) {
   history.push(place);
 }
 
-function getComments(path, JWT, setComments, history) {
-  fetch(path, {
+async function getComments(path, JWT, setComments, history, place) {
+  await fetch(path, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -41,25 +40,24 @@ function getComments(path, JWT, setComments, history) {
   })
     .then((response) => {
       if (response.status === 403) {
-        alert("다시 로그인 하세요.");
-        //history.push("/");
+        alert("다시 로그인 후 이용해주세요.");
         throw new Error("403 error");
       }
+
       return response.json();
     })
     .then((json) => {
       setComments(json.comments);
     })
     .catch((error) => {
-      console.log(error);
       alert("댓글 가져오기에 실패했습니다.");
     });
 
-  history.push("/");
+  history.push(place);
 }
 
-function submitComment(path, JWT, handleContent, requestBody, history) {
-  fetch(path, {
+async function submitComment(path, JWT, requestBody, history, place) {
+  await fetch(path, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -68,20 +66,40 @@ function submitComment(path, JWT, handleContent, requestBody, history) {
     },
     body: JSON.stringify(requestBody),
   })
-    .then((response) => response.json())
-    .then((json) => {
-      console.log("Response received....");
-      console.log(json);
-      if (json.error === undefined || !json.error) {
-        console.log(json);
-      } else {
-        console.log("Sign in error here");
+    .then((response) => {
+      if (response.status === 403) {
+        alert("다시 로그인 후 이용해주세요.");
+        throw new Error("403 error");
+      } else if (response.status !== 200) {
+        throw new Error("error");
       }
     })
-    .catch((error) => console.log(error));
+    .catch((error) => {
+      alert("댓글 등록에 실패했습니다.");
+    });
 
-  handleContent();
-  history.push("/");
+  history.push(place);
+}
+
+function checkCookieLoginData(jwt, user) {
+  if (user === undefined || jwt === undefined) {
+    alert("로그인 후 이용해주세요.");
+    return false;
+  } else if (user.emailVerified === false) {
+    alert("이메일 인증 후 이용해주세요.");
+    return false;
+  } else {
+    return true;
+  }
+}
+
+function checkCookieLoginDataWithoutEmailVerity(jwt, user) {
+  if (user === undefined || jwt === undefined) {
+    alert("로그인 후 이용해주세요.");
+    return false;
+  } else {
+    return true;
+  }
 }
 
 class PostCard extends React.Component {
@@ -92,63 +110,71 @@ class PostCard extends React.Component {
       isCommentsOpen: false,
       content: "",
     };
-    this.handleLike = this.handleLike.bind(this);
+    this.postLike = this.postLike.bind(this);
     this.showComments = this.showComments.bind(this);
     this.setComments = this.setComments.bind(this);
     this.closeComments = this.closeComments.bind(this);
     this.handleInputComment = this.handleInputComment.bind(this);
     this.handleChange = this.handleChange.bind(this);
-    this.handleContent = this.handleContent.bind(this);
+    this.clearContent = this.clearContent.bind(this);
   }
 
-  handleLike(post) {
-    const user = cookie.getJSON("user");
+  postLike(event) {
+    event.preventDefault();
     const jwt = cookie.getJSON("X-AUTH-TOKEN");
+    const user = cookie.getJSON("user");
 
-    if (user === undefined || jwt === undefined) {
-      alert("로그인 후 이용해주세요.");
-    } else if (user.emailVerified === false) {
-      alert("이메일 인증 후 이용해주세요.");
-    } else {
-      const path = "/like/" + post.id;
+    if (checkCookieLoginDataWithoutEmailVerity(jwt, user)) {
+      const path = "/like/" + this.props.post.id;
       postAddLike(path, jwt, this.props.history, this.props.place);
     }
   }
 
   showComments(event) {
     event.preventDefault();
-    const user = cookie.getJSON("user");
     const jwt = cookie.getJSON("X-AUTH-TOKEN");
+    const user = cookie.getJSON("user");
 
-    if (user === undefined || jwt === undefined) {
-      alert("로그인 후 이용해주세요.");
-    } else if (user.emailVerified === false) {
-      alert("이메일 인증 후 이용해주세요.");
-    } else {
+    if (checkCookieLoginDataWithoutEmailVerity(jwt, user)) {
       const path = "/comment/post/" + this.props.post.id;
-      getComments(path, jwt, this.setComments, this.props.history);
+      getComments(
+        path,
+        jwt,
+        this.setComments,
+        this.props.history,
+        this.props.place
+      );
     }
   }
 
   handleInputComment(event) {
     event.preventDefault();
+
     const jwt = cookie.getJSON("X-AUTH-TOKEN");
-    const path = "/comment/post/" + this.props.post.id;
+    const user = cookie.getJSON("user");
 
-    console.log(this.state);
+    if (checkCookieLoginData(jwt, user)) {
+      const path = "/comment/post/" + this.props.post.id;
+      submitComment(
+        path,
+        jwt,
+        this.state,
+        this.props.history,
+        this.props.place
+      );
 
-    submitComment(
-      path,
-      jwt,
-      this.handleContent,
-      this.state,
-      this.props.history
-    );
-
-    if (this.state.isCommentsOpen === true) {
-      const getCommentsPath = "/comment/post/" + this.props.post.id;
-      getComments(getCommentsPath, jwt, this.setComments, this.props.history);
+      if (this.state.isCommentsOpen === true) {
+        getComments(
+          path,
+          jwt,
+          this.setComments,
+          this.props.history,
+          this.props.place
+        );
+      }
     }
+
+    this.clearContent();
   }
 
   closeComments() {
@@ -172,7 +198,7 @@ class PostCard extends React.Component {
     });
   }
 
-  handleContent() {
+  clearContent() {
     this.setState({
       content: "",
     });
@@ -180,6 +206,13 @@ class PostCard extends React.Component {
 
   render() {
     const post = this.props.post;
+    let isLogin = true;
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
+    const user = cookie.getJSON("user");
+
+    if (jwt === undefined || user === undefined) {
+      isLogin = false;
+    }
 
     return (
       <Card outline color="primary" className="mb-2" key={post.id}>
@@ -187,7 +220,7 @@ class PostCard extends React.Component {
         <CardBody>
           <CardText>{post.content}</CardText>
           <Button
-            onClick={() => this.handleLike(post)}
+            onClick={this.postLike}
             className="mr-2"
             outline
             color="danger"
@@ -241,26 +274,28 @@ class PostCard extends React.Component {
             <CardFooter>작성된 댓글이 없습니다.</CardFooter>
           ))}
 
-        <CardFooter>
-          <form onSubmit={this.handleInputComment}>
-            <h5 className="mb-4">댓글 작성</h5>
-            <div className="form-group">
-              <input
-                name="content"
-                type="text"
-                className="form-control"
-                id="content"
-                value={this.state.content}
-                onChange={this.handleChange}
-              />
-              <div className="col-12 mt-2">
-                <button type="submit" className="btn btn-primary btn-large">
-                  작성 완료
-                </button>
+        {isLogin && (
+          <CardFooter>
+            <form onSubmit={this.handleInputComment}>
+              <h5 className="mb-4">댓글 작성</h5>
+              <div className="form-group">
+                <input
+                  name="content"
+                  type="text"
+                  className="form-control"
+                  id={post.id}
+                  value={this.state.content}
+                  onChange={this.handleChange}
+                />
+                <div className="col-12 mt-2">
+                  <button type="submit" className="btn btn-primary btn-large">
+                    작성 완료
+                  </button>
+                </div>
               </div>
-            </div>
-          </form>
-        </CardFooter>
+            </form>
+          </CardFooter>
+        )}
       </Card>
     );
   }

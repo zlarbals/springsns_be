@@ -21,10 +21,6 @@ public class LikeService {
 
         Account account = accountRepository.findByEmail(email);
 
-        if(!account.isEmailVerified()){
-            return false;
-        }
-
         Post post = postRepository.findById(postId).orElseThrow();
 
         Like like = likeRepository.findByAccountAndPost(account,post);

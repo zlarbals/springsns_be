@@ -2,6 +2,47 @@ import React from "react";
 import cookie from "js-cookie";
 import PostCard from "./PostCard";
 
+function getMyPosts(path, jwt, setPosts, state, history) {
+  fetch(path, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "X-AUTH-TOKEN": jwt,
+    },
+  })
+    .then((response) => {
+      if (response.status === 403) {
+        alert("다시 로그인 후 이용해주세요.");
+        throw new Error("403 error");
+      } else if (response.status === 200) {
+        return response.json();
+      } else {
+        throw new Error("error");
+      }
+    })
+    .then((json) => {
+      if (JSON.stringify(state.posts) !== JSON.stringify(json)) {
+        setPosts(json);
+      }
+    })
+    .catch((error) => {
+      alert("작성한 게시글 가져오기에 실패했습니다");
+      history.goBack();
+    });
+}
+
+function checkCookieLoginData(jwt, user) {
+  if (user === undefined || jwt === undefined) {
+    alert("로그인 후 이용해주세요.");
+    return false;
+  } else if (user.emailVerified === false) {
+    alert("이메일 인증 후 이용해주세요.");
+    return false;
+  } else {
+    return true;
+  }
+}
+
 class MyPosts extends React.Component {
   constructor(props) {
     super(props);
@@ -12,51 +53,37 @@ class MyPosts extends React.Component {
   }
 
   componentDidMount() {
-    const JWT = cookie.getJSON("X-AUTH-TOKEN");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
+    const user = cookie.getJSON("user");
 
-    fetch("/post/my", {
-      method: "GET",
-      headers: {
-        "X-AUTH-TOKEN": JWT,
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        this.setState({
-          posts: json,
-        });
-      })
-      .catch((error) => {
-        if (error.statusCode === 403) {
-          alert("다시 로그인 하세요.");
-          this.props.history.push("/");
-        }
-      });
+    if (checkCookieLoginData(jwt, user)) {
+      getMyPosts(
+        "/post/my",
+        jwt,
+        this.setPosts,
+        this.state,
+        this.props.history
+      );
+    } else {
+      this.props.history.goBack();
+    }
   }
 
   componentDidUpdate() {
-    const JWT = cookie.getJSON("X-AUTH-TOKEN");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
+    const user = cookie.getJSON("user");
 
-    fetch("/post/my", {
-      method: "GET",
-      headers: {
-        "X-AUTH-TOKEN": JWT,
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        if (JSON.stringify(this.state.posts) !== JSON.stringify(json)) {
-          this.setState({
-            posts: json,
-          });
-        }
-      })
-      .catch((error) => {
-        if (error.statusCode === 403) {
-          alert("다시 로그인 하세요.");
-          this.props.history.push("/");
-        }
-      });
+    if (checkCookieLoginData(jwt, user)) {
+      getMyPosts(
+        "/post/my",
+        jwt,
+        this.setPosts,
+        this.state,
+        this.props.history
+      );
+    } else {
+      this.props.history.goBack();
+    }
   }
 
   setPosts(json) {

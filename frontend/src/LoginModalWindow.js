@@ -2,7 +2,7 @@ import React from "react";
 import cookie from "js-cookie";
 import { Modal, ModalHeader, ModalBody } from "reactstrap";
 
-function submitRequest(path, requestBody, handleSignedIn, handleError) {
+function submitSignInRequest(path, requestBody, handleSignedIn, handleError) {
   fetch(path, {
     method: "POST",
     headers: {
@@ -11,26 +11,24 @@ function submitRequest(path, requestBody, handleSignedIn, handleError) {
     },
     body: JSON.stringify(requestBody),
   })
-    .then((response) => response.json())
-    .then((json) => {
-      console.log("Response received....");
-      console.log(json);
-      if (json.error === undefined || !json.error) {
-        console.log("Sign in Success...");
-        cookie.set("X-AUTH-TOKEN", json.jwtToken);
-        cookie.set("user", json.user);
-        handleSignedIn(json.user);
-      } else {
-        console.log("Sign in error here");
-        handleError(json.error);
+    .then((response) => {
+      if (response.status !== 200) {
+        throw new Error("error");
       }
+
+      return response.json();
     })
-    .catch((error) => console.log(error));
+    .then((json) => {
+      cookie.set("X-AUTH-TOKEN", json.jwtToken);
+      cookie.set("user", json.user);
+      handleSignedIn();
+    })
+    .catch((error) => {
+      handleError();
+    });
 }
 
 function submitSignUpRequest(path, requestBody, handleError, showSignInModal) {
-  console.log(path);
-
   fetch(path, {
     method: "POST",
     headers: {
@@ -39,19 +37,22 @@ function submitSignUpRequest(path, requestBody, handleError, showSignInModal) {
     },
     body: JSON.stringify(requestBody),
   })
-    .then((response) => response.json())
-    .then((json) => {
-      console.log("Response received....");
-      if (json.error === undefined || !json.error) {
-        console.log("Sign Up Success...");
-        console.log(json);
-        showSignInModal();
-      } else {
-        console.log(json);
-        handleError();
+    .then((response) => {
+      console.log(response);
+      if (response.json.status !== 200) {
+        throw new Error(response.json().error);
       }
+
+      showSignInModal();
+      //return response.json();
     })
-    .catch((error) => console.log(error));
+    // .then((json) => {
+    //   showSignInModal();
+    // })
+    .catch((error) => {
+      console.log(error);
+      handleError(error);
+    });
 }
 
 class SignInForm extends React.Component {
@@ -75,8 +76,9 @@ class SignInForm extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    submitRequest(
-      "users/signin",
+
+    submitSignInRequest(
+      "/users/signin",
       this.state,
       this.props.handleSignedIn,
       this.handleError
@@ -130,7 +132,7 @@ class SignInForm extends React.Component {
               <button
                 type="submit"
                 className="btn btn-link"
-                onClick={() => this.props.handleNewUser()}
+                onClick={this.props.showSignUpForm}
               >
                 회원 가입
               </button>
@@ -171,7 +173,7 @@ class SignUpForm extends React.Component {
     };
 
     submitSignUpRequest(
-      "sign-up",
+      "/sign-up",
       requestBody,
       this.handleError,
       this.props.showSignInModal
@@ -198,11 +200,6 @@ class SignUpForm extends React.Component {
   }
 
   render() {
-    // let message = null;
-    // if (this.state.errormessage.length !== 0) {
-    //   message = <h5 className="mb-4 text-danger">{this.state.errormessage}</h5>;
-    // }
-
     const errorMessages = this.state.errormessage;
     let message = errorMessages.map((errorMessage) => (
       <h5 className="mb-4 text-danger">{errorMessage}</h5>
@@ -274,11 +271,11 @@ export default class LoginModalWindow extends React.Component {
       showSignUpForm: false,
     };
 
-    this.handleNewUser = this.handleNewUser.bind(this);
+    this.showSignUpForm = this.showSignUpForm.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
   }
 
-  handleNewUser() {
+  showSignUpForm() {
     this.setState({
       showSignUpForm: true,
     });
@@ -293,7 +290,7 @@ export default class LoginModalWindow extends React.Component {
   render() {
     let modalBody = (
       <SignInForm
-        handleNewUser={this.handleNewUser}
+        showSignUpForm={this.showSignUpForm}
         handleSignedIn={this.props.handleSignedIn}
       />
     );

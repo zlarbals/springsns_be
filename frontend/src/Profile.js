@@ -1,5 +1,5 @@
 import React from "react";
-import Cookies from "js-cookie";
+import cookie from "js-cookie";
 import { Link } from "react-router-dom";
 
 class Profile extends React.Component {
@@ -14,11 +14,11 @@ class Profile extends React.Component {
   }
 
   render() {
-    const user = Cookies.getJSON("user");
-    const jwt = Cookies.getJSON("X-AUTH-TOKEN");
+    const user = cookie.getJSON("user");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
 
     let isLogin = false;
-    let greetingMessage = "게시글 작성에는 로그인이 필요합니다.";
+    let greetingMessage = "서비스 이용에는 로그인이 필요합니다.";
     let name;
     let isEmailVerified;
     if (user !== undefined && jwt !== undefined) {
@@ -44,13 +44,7 @@ class Profile extends React.Component {
             </li>
             {isEmailVerified ? (
               <li className="list-group-item list-group-item-action">
-                <Link
-                  to="/"
-                  onClick={() => {
-                    this.props.showPostModalWindow();
-                    console.log("profile post modal show");
-                  }}
-                >
+                <Link to="/" onClick={this.props.showPostModalWindow}>
                   게시글 작성
                 </Link>
               </li>
@@ -68,13 +62,7 @@ class Profile extends React.Component {
         ) : (
           <ul className="list-group list-group-flush ">
             <li className="list-group-item list-group-item-action">
-              <Link
-                to="/"
-                onClick={() => {
-                  this.props.showModalWindow();
-                  console.log("profile login modal show");
-                }}
-              >
+              <Link to="/" onClick={this.props.showModalWindow}>
                 로그인
               </Link>
             </li>

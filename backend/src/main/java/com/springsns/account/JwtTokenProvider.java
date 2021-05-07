@@ -25,7 +25,7 @@ public class JwtTokenProvider {  // JWT토큰 생성 및 유효성 검증
     private String SECRET_KEY = "zlarbals";
 
     //1시간
-    private long tokenValidTime = 1000L * 60 * 60;
+    private long tokenValidTime = 1000L * 60 * 1;
 
     private final UserDetailsService userDetailsService;
 

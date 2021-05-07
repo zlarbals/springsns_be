@@ -2,6 +2,35 @@ import React from "react";
 import cookie from "js-cookie";
 import PostCard from "./PostCard";
 
+function getPosts(path, jwt, setPosts, state, history) {
+  fetch(path, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "X-AUTH-TOKEN": jwt,
+    },
+  })
+    .then((response) => {
+      if (response.status === 403) {
+        alert("다시 로그인 후 이용해주세요.");
+        throw new Error("403 error");
+      } else if (response.status === 200) {
+        return response.json();
+      } else {
+        throw new Error("error");
+      }
+    })
+    .then((json) => {
+      if (JSON.stringify(state.posts) !== JSON.stringify(json)) {
+        setPosts(json);
+      }
+    })
+    .catch((error) => {
+      alert("게시글 가져오기에 실패했습니다.");
+      history.goBack();
+    });
+}
+
 class Posts extends React.Component {
   constructor(props) {
     super(props);
@@ -12,52 +41,15 @@ class Posts extends React.Component {
   }
 
   componentDidMount() {
-    const JWT = cookie.getJSON("X-AUTH-TOKEN");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
 
-    fetch("/post", {
-      method: "GET",
-      headers: {
-        "X-AUTH-TOKEN": JWT,
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        this.setState({
-          posts: json,
-        });
-      })
-      .catch((error) => {
-        if (error.statusCode === 403) {
-          alert("다시 로그인 하세요.");
-          this.props.history.push("/");
-        }
-      });
-    //getPost(this.setPosts);
+    getPosts("/post", jwt, this.setPosts, this.state, this.props.history);
   }
 
   componentDidUpdate() {
-    const JWT = cookie.getJSON("X-AUTH-TOKEN");
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
 
-    fetch("/post", {
-      method: "GET",
-      headers: {
-        "X-AUTH-TOKEN": JWT,
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        if (JSON.stringify(this.state.posts) !== JSON.stringify(json)) {
-          this.setState({
-            posts: json,
-          });
-        }
-      })
-      .catch((error) => {
-        if (error.statusCode === 403) {
-          alert("다시 로그인 하세요.");
-          this.props.history.push("/");
-        }
-      });
+    getPosts("/post", jwt, this.setPosts, this.state, this.props.history);
   }
 
   setPosts(json) {

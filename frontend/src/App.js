@@ -88,7 +88,7 @@ class App extends Component {
       <>
         {isLogin === true && user.emailVerified === false && (
           <span className="d-block p-2 bg-primary text-white">
-            이메일 인증 후 게시글을 작성할 수 있습니다.
+            이메일 인증 후 게시글 및 댓글을 작성할 수 있습니다.
           </span>
         )}
 
