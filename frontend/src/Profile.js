@@ -6,7 +6,6 @@ function ResendEmail(path, jwt) {
   fetch(path, {
     method: "GET",
     headers: {
-      Accept: "application/json",
       "X-AUTH-TOKEN": jwt,
     },
   })
@@ -34,6 +33,15 @@ function checkCookieLoginDataWithoutEmailVerity(jwt, user) {
   }
 }
 
+function checkEmailVerified(user) {
+  if (user.emailVerified === true) {
+    alert("이미 이메일 인증이 완료된 사용자 입니다.");
+    return false;
+  } else {
+    return true;
+  }
+}
+
 class Profile extends React.Component {
   constructor(props) {
     super(props);
@@ -50,7 +58,10 @@ class Profile extends React.Component {
     const jwt = cookie.getJSON("X-AUTH-TOKEN");
     const user = cookie.getJSON("user");
 
-    if (checkCookieLoginDataWithoutEmailVerity(jwt, user)) {
+    if (
+      checkCookieLoginDataWithoutEmailVerity(jwt, user) &&
+      checkEmailVerified(user)
+    ) {
       const path = "/account/email";
       ResendEmail(path, jwt);
     }

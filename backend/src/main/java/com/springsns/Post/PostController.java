@@ -51,7 +51,7 @@ public class PostController {
                 .account(account)
                 .content(content)
                 .postFile(postFile)
-                .postedAt(LocalDateTime.now())
+                //.postedAt(LocalDateTime.now())
                 .build();
 
         //저장.
@@ -122,5 +122,10 @@ public class PostController {
 
         return ResponseEntity.ok(postList);
     }
+
+//    @GetMapping("/post/search")
+//    public ResponseEntity searchPost(@RequestParam String content){
+//
+//    }
 
 }

@@ -39,14 +39,18 @@ public class AccountService {
         return accountResponseDto;
     }
 
-    public AccountResponseDto resendEmail(String email){
+    public boolean resendEmail(String email){
         Account account = accountRepository.findByEmail(email);
+
+        if(account.isEmailVerified()){
+            return false;
+        }
 
         sendSignUpConfirmEmail(account);
 
-        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
+        //AccountResponseDto accountResponseDto = new AccountResponseDto(account);
 
-        return accountResponseDto;
+        return true;
     }
 
     //회원 가입 처리
@@ -83,7 +87,7 @@ public class AccountService {
     @Transactional
     public AccountResponseDto completeSignUp(Account account) {
         account.setEmailVerified(true);
-        account.setJoinedAt(LocalDateTime.now());
+        account.setEmailVerifiedDate(LocalDateTime.now());
 
         AccountResponseDto accountResponseDto = new AccountResponseDto(account);
 

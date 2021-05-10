@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Comment {
+public class Comment extends BaseTimeEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,6 +29,6 @@ public class Comment {
     @Column(columnDefinition = "TEXT", nullable=false)
     private String content;
 
-    private LocalDateTime postedAt;
+    //private LocalDateTime postedAt;
 
 }

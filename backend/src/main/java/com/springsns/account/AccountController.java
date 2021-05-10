@@ -99,11 +99,13 @@ public class AccountController {
         HashMap<String,Object> resultMap = new HashMap<>();
         String email = principal.getName();
 
-        AccountResponseDto accountResponseDto = accountService.resendEmail(email);
+        boolean isOk = accountService.resendEmail(email);
 
-        resultMap.put("user",accountResponseDto);
-
-        return new ResponseEntity(resultMap,HttpStatus.OK);
+        if(isOk){
+            return new ResponseEntity(HttpStatus.OK);
+        }else{
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
     }
 
 

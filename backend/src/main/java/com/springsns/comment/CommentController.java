@@ -48,7 +48,7 @@ public class CommentController {
                 .account(account)
                 .post(post)
                 .content(commentForm.getContent())
-                .postedAt(LocalDateTime.now())
+                //.postedAt(LocalDateTime.now())
                 .build();
 
         commentRepository.save(comment);

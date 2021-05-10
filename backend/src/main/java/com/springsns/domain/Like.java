@@ -8,7 +8,7 @@ import javax.persistence.*;
 @Table(name = "LIKES")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Like {
+public class Like extends BaseTimeEntity{
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
