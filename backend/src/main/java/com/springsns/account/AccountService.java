@@ -39,6 +39,16 @@ public class AccountService {
         return accountResponseDto;
     }
 
+    public AccountResponseDto resendEmail(String email){
+        Account account = accountRepository.findByEmail(email);
+
+        sendSignUpConfirmEmail(account);
+
+        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
+
+        return accountResponseDto;
+    }
+
     //회원 가입 처리
     private Account saveNewAccount(SignUpForm signUpForm) {
         //new account 만들기
@@ -61,7 +71,7 @@ public class AccountService {
         //email 보내기.
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(newAccount.getEmail());//받는 사람
-        mailMessage.setSubject("SpringSns, 회원 가입 인증");  //메일 제목
+        mailMessage.setSubject("SpringSNS, 회원 가입 인증");  //메일 제목
         mailMessage.setText("/check-email-token?token=" + newAccount.getEmailCheckToken() + "&email=" + newAccount.getEmail());  // 메일의 본문
         javaMailSender.send(mailMessage);//메일 보내기.
     }

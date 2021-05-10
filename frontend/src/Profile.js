@@ -2,15 +2,58 @@ import React from "react";
 import cookie from "js-cookie";
 import { Link } from "react-router-dom";
 
+function ResendEmail(path, jwt) {
+  fetch(path, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "X-AUTH-TOKEN": jwt,
+    },
+  })
+    .then((response) => {
+      if (response.status === 403) {
+        alert("다시 로그인 후 이용해주세요.");
+        throw new Error("403 error");
+      } else if (response.status !== 200) {
+        throw new Error("error");
+      } else {
+        alert("인증 이메일 보내기에 성공했습니다.");
+      }
+    })
+    .catch((error) => {
+      alert("인증 이메일 보내기에 실패했습니다.");
+    });
+}
+
+function checkCookieLoginDataWithoutEmailVerity(jwt, user) {
+  if (user === undefined || jwt === undefined) {
+    alert("로그인 후 이용해주세요.");
+    return false;
+  } else {
+    return true;
+  }
+}
+
 class Profile extends React.Component {
   constructor(props) {
     super(props);
     this.handleSignOut = this.handleSignOut.bind(this);
+    this.resendEmail = this.resendEmail.bind(this);
   }
 
   handleSignOut(event) {
     event.preventDefault();
     this.props.handleSignedOut();
+  }
+
+  resendEmail() {
+    const jwt = cookie.getJSON("X-AUTH-TOKEN");
+    const user = cookie.getJSON("user");
+
+    if (checkCookieLoginDataWithoutEmailVerity(jwt, user)) {
+      const path = "/account/email";
+      ResendEmail(path, jwt);
+    }
   }
 
   render() {
@@ -50,7 +93,9 @@ class Profile extends React.Component {
               </li>
             ) : (
               <li className="list-group-item list-group-item-action">
-                인증 이메일 다시 보내기
+                <Link to="/" onClick={this.resendEmail}>
+                  인증 이메일 다시 보내기
+                </Link>
               </li>
             )}
             <li className="list-group-item list-group-item-action">

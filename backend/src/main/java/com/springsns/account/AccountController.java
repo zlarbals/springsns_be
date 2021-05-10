@@ -10,6 +10,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -90,7 +91,19 @@ public class AccountController {
         resultMap.put("user", accountResponseDto);
 
         return new ResponseEntity(resultMap, HttpStatus.OK);
+    }
 
+    @GetMapping("/account/email")
+    public ResponseEntity sendEmail(Principal principal){
+        System.out.println("here is /account/Email");
+        HashMap<String,Object> resultMap = new HashMap<>();
+        String email = principal.getName();
+
+        AccountResponseDto accountResponseDto = accountService.resendEmail(email);
+
+        resultMap.put("user",accountResponseDto);
+
+        return new ResponseEntity(resultMap,HttpStatus.OK);
     }
 
 
