@@ -218,6 +218,20 @@ class PostCard extends React.Component {
       <Card outline color="primary" className="mb-2" key={post.id}>
         <CardHeader>{post.authorNickname}</CardHeader>
         <CardBody>
+          {post.existFile && (
+            <CardText className="text-center">
+              <img
+                src={`/post/image/${post.fileName}`}
+                alt=""
+                // style={{
+                //   maxWidth: "150px",
+                //   maxhHeight: "150px",
+                // }}
+                className="img-fluid"
+              />
+            </CardText>
+          )}
+
           <CardText>{post.content}</CardText>
           <Button
             onClick={this.postLike}

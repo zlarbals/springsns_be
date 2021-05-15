@@ -6,11 +6,16 @@ import com.springsns.domain.Like;
 import com.springsns.domain.Post;
 import com.springsns.like.LikeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -51,7 +56,6 @@ public class PostController {
                 .account(account)
                 .content(content)
                 .postFile(postFile)
-                //.postedAt(LocalDateTime.now())
                 .build();
 
         //저장.
@@ -63,7 +67,7 @@ public class PostController {
     }
 
     @GetMapping("/post")
-    public ResponseEntity getAllPosts(Principal principal) {
+    public ResponseEntity getAllPosts(Principal principal) throws MalformedURLException {
         System.out.println("here is get /post");
 
         String email = null;
@@ -117,15 +121,29 @@ public class PostController {
         List<PostResponseDto> postList = new ArrayList<>();
 
         for(Like like: likes){
+
             postList.add(new PostResponseDto(like.getPost(),true));
         }
 
         return ResponseEntity.ok(postList);
     }
 
-//    @GetMapping("/post/search")
-//    public ResponseEntity searchPost(@RequestParam String content){
-//
-//    }
+    @GetMapping("/post/image/{fileName:.+}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) throws IOException {
+        Resource resource = postService.loadFileAsResource(fileName);
+
+        String contentType = null;
+        contentType=request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+
+        if(contentType==null){
+            contentType="application/octet-stream";
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+resource.getFilename()+"\"")
+                .body(resource);
+
+    }
 
 }

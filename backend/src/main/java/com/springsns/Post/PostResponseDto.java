@@ -2,6 +2,12 @@ package com.springsns.Post;
 
 import com.springsns.domain.Post;
 import lombok.Getter;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 @Getter
 public class PostResponseDto {
@@ -16,7 +22,9 @@ public class PostResponseDto {
 
     private boolean isExistFile;
 
-    public PostResponseDto(Post post){
+    private String fileName;
+
+    public PostResponseDto(Post post) {
         this.id=post.getId();
         this.authorNickname=post.getAccount().getNickname();
         this.content=post.getContent();
@@ -25,10 +33,11 @@ public class PostResponseDto {
             this.isExistFile=false;
         }else{
             this.isExistFile=true;
+            this.fileName=post.getPostFile().getFileName();
         }
     }
 
-    public PostResponseDto(Post post,boolean isLike){
+    public PostResponseDto(Post post, boolean isLike)  {
         this.id=post.getId();
         this.authorNickname=post.getAccount().getNickname();
         this.content=post.getContent();
@@ -37,6 +46,7 @@ public class PostResponseDto {
             this.isExistFile=false;
         }else{
             this.isExistFile=true;
+            this.fileName=post.getPostFile().getFileName();
         }
     }
 

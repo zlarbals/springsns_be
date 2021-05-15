@@ -27,7 +27,8 @@ function getPosts(path, jwt, setPosts, state, history) {
     })
     .catch((error) => {
       alert("게시글 가져오기에 실패했습니다.");
-      history.goBack();
+      //history.goBack();
+      history.push("/");
     });
 }
 

@@ -49,11 +49,17 @@ class PostForm extends React.Component {
     super(props);
     this.state = {
       errorMessage: "",
+      imgBase64: "",
+      imgFile: null,
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleError = this.handleError.bind(this);
+    this.handleChangeFile = this.handleChangeFile.bind(this);
+    this.setImgBase64 = this.setImgBase64.bind(this);
+    this.setImgFile = this.setImgFile.bind(this);
+    this.clearImg = this.clearImg.bind(this);
   }
 
   handleChange(event) {
@@ -73,6 +79,59 @@ class PostForm extends React.Component {
     this.setState({
       errorMessage: error,
     });
+  }
+
+  setImgBase64(base64) {
+    this.setState({
+      imgBase64: base64,
+    });
+  }
+
+  setImgFile(imgFile) {
+    this.setState({
+      imgFile: imgFile,
+    });
+  }
+
+  clearImg() {
+    this.setState({
+      imgBase64: "",
+      imgFile: null,
+    });
+  }
+
+  handleChangeFile(event) {
+    const file = event.target.files[0];
+
+    if (file === undefined) {
+      this.clearImg();
+      return;
+    }
+
+    const type = file.type;
+
+    if (
+      !(type === "image/gif" || type === "image/jpeg" || type === "image/png")
+    ) {
+      alert("gif, jpeg, png 이미지 파일만 업로드 할 수 있습니다.");
+      event.target.value = "";
+      this.clearImg();
+      return;
+    }
+
+    let reader = new FileReader();
+
+    reader.onloadend = () => {
+      const base64 = reader.result;
+      if (base64) {
+        this.setImgBase64(base64.toString());
+      }
+    };
+
+    if (file) {
+      reader.readAsDataURL(file);
+      this.setImgFile(file);
+    }
   }
 
   render() {
@@ -99,8 +158,20 @@ class PostForm extends React.Component {
               type="file"
               className="form-contorl"
               id="file"
-              onChange={this.handleChange}
+              accept="image/gif,image/jpeg,image/png"
+              onChange={this.handleChangeFile}
             />
+
+            <div>
+              <img
+                src={this.state.imgBase64}
+                alt=""
+                style={{
+                  maxWidth: "150px",
+                  maxhHeight: "150px",
+                }}
+              />
+            </div>
 
             <div className="col-12 mt-2">
               <button type="submit" className="btn btn-primary btn-large">

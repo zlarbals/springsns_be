@@ -27,7 +27,8 @@ function getMyPosts(path, jwt, setPosts, state, history) {
     })
     .catch((error) => {
       alert("작성한 게시글 가져오기에 실패했습니다");
-      history.goBack();
+      //history.goBack();
+      history.push("/");
     });
 }
 
@@ -65,7 +66,8 @@ class MyPosts extends React.Component {
         this.props.history
       );
     } else {
-      this.props.history.goBack();
+      //this.props.history.goBack();
+      this.props.history.push("/");
     }
   }
 
@@ -82,7 +84,8 @@ class MyPosts extends React.Component {
         this.props.history
       );
     } else {
-      this.props.history.goBack();
+      //this.props.history.goBack();
+      this.props.history.push("/");
     }
   }
 

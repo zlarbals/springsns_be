@@ -21,7 +21,8 @@ async function getEmailVerify(emailCheckToken, email, history) {
       alert("이메일 인증에 실패했습니다. 다시 시도해 주세요.");
     });
 
-  history.goBack();
+  //history.goBack();
+  history.push("/");
 }
 
 class EmailCheck extends React.Component {

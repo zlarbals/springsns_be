@@ -26,7 +26,8 @@ function getLikePosts(path, jwt, setPosts, state, history) {
     })
     .catch((error) => {
       alert("좋아요한 게시글 가져오기에 실패했습니다.");
-      history.goBack();
+      //history.goBack();
+      history.push("/");
     });
 }
 
@@ -61,7 +62,8 @@ class LikePosts extends React.Component {
         this.props.history
       );
     } else {
-      this.props.history.goBack();
+      //this.props.history.goBack();
+      this.props.history.push("/");
     }
   }
 
@@ -78,7 +80,8 @@ class LikePosts extends React.Component {
         this.props.history
       );
     } else {
-      this.props.history.goBack();
+      //this.props.history.goBack();
+      this.props.history.push("/");
     }
   }
 

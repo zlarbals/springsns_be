@@ -6,13 +6,21 @@ import com.springsns.domain.Account;
 import com.springsns.domain.Post;
 import com.springsns.like.LikeRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,30 +31,35 @@ public class PostService {
     private final PostRepository postRepository;
     private final AccountRepository accountRepository;
     private final LikeRepository likeRepository;
+    private final Path fileStorageLocation = Paths.get("/Users/KYUMIN/uploads").toAbsolutePath().normalize();
 
     @Transactional(readOnly = true)
-    public List<PostResponseDto> getAllPosts(String email) {
+    public List<PostResponseDto> getAllPosts(String email){
 
         List<PostResponseDto> result = new ArrayList<>();
         //List<Post> postList = postRepository.findAllPosts();
-        List<Post> postList=postRepository.findAll();
+        List<Post> postList = postRepository.findAll();
 
-        Account account=null;
-        if(email!=null)
+        Account account = null;
+        if (email != null)
             account = accountRepository.findByEmail(email);
 
-        if(account==null){
+
+        if (account == null) {
             // 그냥 PostResponseDto에 담아서 넘겨줌
-            for(Post post:postList){
-                result.add(new PostResponseDto(post,false));
+            for (Post post : postList) {
+                result.add(new PostResponseDto(post, false));
             }
-        }else{
+        } else {
             // PostResponseDto에 isLike 부분 true로 처리
-            for(Post post:postList){
-                if(likeRepository.existsByAccountAndPost(account,post)){
-                    result.add(new PostResponseDto(post,true));
-                }else{
-                    result.add(new PostResponseDto(post,false));
+            //이부분 db 쿼리로 수정할 것.
+
+            for (Post post : postList) {
+
+                if (likeRepository.existsByAccountAndPost(account, post)) {
+                    result.add(new PostResponseDto(post, true));
+                } else {
+                    result.add(new PostResponseDto(post, false));
                 }
             }
         }
@@ -54,27 +67,26 @@ public class PostService {
         return result;
     }
 
-    public PostFile processPostFile(MultipartFile file) throws NoSuchAlgorithmException, IOException {
-        String originalFileName = file.getOriginalFilename();
+    public PostFile processPostFile(MultipartFile file) throws IOException {
 
-        String fileName = new MD5Generator(originalFileName).toString();
+        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
 
-        System.out.println(System.getProperty("user.dir"));
-        String savePath = System.getProperty("user.dir") + "\\files";
 
-        File directory = new File(savePath);
+        Path targetLocation = this.fileStorageLocation.resolve(originalFileName);
+        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-        boolean isOk = directory.mkdir();
-        if(!isOk){
-            System.out.println("디렉토리 생성에 실패했습니다.");
-        }
-
-        String filePath = savePath + "\\" + fileName;
-        file.transferTo(new File(filePath));
-
-        PostFile postFile = new PostFile(originalFileName,fileName,filePath);
+        //PostFile 생성자 수정할 것.
+        PostFile postFile = new PostFile(originalFileName,originalFileName,"targetLocation");
 
         return postFile;
+
+    }
+
+    public Resource loadFileAsResource(String fileName) throws MalformedURLException {
+        Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+        Resource resource = new UrlResource(filePath.toUri());
+
+        return resource;
     }
 
 }
