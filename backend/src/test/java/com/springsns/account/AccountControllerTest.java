@@ -2,6 +2,8 @@ package com.springsns.account;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springsns.domain.Account;
+import com.springsns.mail.EmailMessage;
+import com.springsns.mail.EmailService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -43,7 +45,7 @@ class AccountControllerTest {
     private AccountRepository accountRepository;
 
     @MockBean
-    JavaMailSender javaMailSender;
+    EmailService emailService;
 
     @DisplayName("인증 메일 확인 - 입력값 오류")
     @Test
@@ -97,7 +99,7 @@ class AccountControllerTest {
         assertNotEquals(account.getPassword(), "dskljasdf32423");
         assertNotNull(account.getEmailCheckToken());
 
-        then(javaMailSender).should().send(ArgumentMatchers.any(SimpleMailMessage.class));
+        then(emailService).should().sendEmail(ArgumentMatchers.any(EmailMessage.class));
     }
 
     @DisplayName("회원 가입 처리 - 입력값 오류")

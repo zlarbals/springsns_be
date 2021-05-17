@@ -1,12 +1,17 @@
 package com.springsns.account;
 
+import com.springsns.config.AppProperties;
 import com.springsns.domain.Account;
+import com.springsns.mail.EmailMessage;
+import com.springsns.mail.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,14 +19,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountService {
 
     private final AccountRepository accountRepository;
-    private final JavaMailSender javaMailSender;
+    private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TemplateEngine templateEngine;
+    private final AppProperties appProperties;
 
     //@transactional을 붙여서 범위안에 넣어놔야 해당 객체는 persist상태가 유지된다.
     //persist상태의 객체는 transaction이 종료될 때 상태를 db에 싱크한다.
@@ -72,12 +80,21 @@ public class AccountService {
     }
 
     private void sendSignUpConfirmEmail(Account newAccount) {
-        //email 보내기.
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setTo(newAccount.getEmail());//받는 사람
-        mailMessage.setSubject("SpringSNS, 회원 가입 인증");  //메일 제목
-        mailMessage.setText("/check-email-token?token=" + newAccount.getEmailCheckToken() + "&email=" + newAccount.getEmail());  // 메일의 본문
-        javaMailSender.send(mailMessage);//메일 보내기.
+        Context context = new Context(); // 모델이라고 생각하면 된다.
+        context.setVariable("link","/check-email-token?token=" + newAccount.getEmailCheckToken() + "&email=" + newAccount.getEmail());
+        context.setVariable("nickname",newAccount.getNickname());
+        context.setVariable("linkName","이메일 인증하기");
+        context.setVariable("message","Spring SNS 서비스를 사용하려면 링크를 클릭하세요.");
+        context.setVariable("host",appProperties.getHost());
+        String message = templateEngine.process("mail/simple-link", context);
+
+        EmailMessage emailMessage = EmailMessage.builder()
+                .to(newAccount.getEmail())
+                .subject("SpringSNS, 회원 가입 인증")
+                .message(message)
+                .build();
+
+        emailService.sendEmail(emailMessage);
     }
 
     public boolean isValidPassword(String password, String encodedPassword) {
