@@ -232,7 +232,8 @@ class PostCard extends React.Component {
             </CardText>
           )}
 
-          <CardText>{post.content}</CardText>
+          {post.content !== "undefined" && <CardText>{post.content}</CardText>}
+
           <Button
             onClick={this.postLike}
             className="mr-2"
