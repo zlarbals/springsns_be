@@ -67,6 +67,10 @@ public class PostService {
         return result;
     }
 
+//    public List<PostResponseDto> getAllPosts_(String email){
+//        //강의 한번 더 보고 다시 해보자.
+//    }
+
     public PostFile processPostFile(MultipartFile file) throws IOException {
 
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());

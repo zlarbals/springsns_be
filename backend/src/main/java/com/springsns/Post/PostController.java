@@ -7,6 +7,10 @@ import com.springsns.domain.Post;
 import com.springsns.like.LikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -67,7 +71,7 @@ public class PostController {
     }
 
     @GetMapping("/post")
-    public ResponseEntity getAllPosts(Principal principal) throws MalformedURLException {
+    public ResponseEntity getAllPosts(Principal principal){
         System.out.println("here is get /post");
 
         String email = null;
@@ -81,6 +85,15 @@ public class PostController {
 
 
         return ResponseEntity.ok(postList);
+    }
+
+    //slice example
+    //getAllPosts 메서드 대체 후 해당 메서드 삭제.
+    @GetMapping("/post/page")
+    public Slice<PostResponseDto> getPostByPage(@PageableDefault(sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable){
+        Slice<Post> slice = postRepository.findPostByPaging(pageable);
+        Slice<PostResponseDto> dtoPage = slice.map(post->new PostResponseDto(post,false));
+        return dtoPage;
     }
 
     @GetMapping("/post/my")
