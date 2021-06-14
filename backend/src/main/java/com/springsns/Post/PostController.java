@@ -38,7 +38,7 @@ public class PostController {
     //@Controller로 선언된 bean 객체에서는 메서드 인자로 Principal 객체에 직접 접근할 수 있는 추가적인 옵션이 있다.
     //현재 인증된 사용자의 정보를 Principal로 직접 접근할 수 있다.
     @PostMapping("/post")
-    public ResponseEntity registerPost(@RequestPart(required = false) MultipartFile file,@RequestParam String content, Principal principal) throws IOException, NoSuchAlgorithmException {
+    public ResponseEntity registerPost(@RequestPart(required = false) MultipartFile file, @RequestParam String content, Principal principal) throws IOException, NoSuchAlgorithmException {
         System.out.println("here is post /post");
         String email = principal.getName();
 
@@ -51,8 +51,8 @@ public class PostController {
 
         PostFile postFile = null;
 
-        if(file!=null){
-            postFile=postService.processPostFile(file);
+        if (file != null) {
+            postFile = postService.processPostFile(file);
         }
 
         //new post 생성.
@@ -71,7 +71,7 @@ public class PostController {
     }
 
     @GetMapping("/post")
-    public ResponseEntity getAllPosts(Principal principal){
+    public ResponseEntity getAllPosts(Principal principal) {
         System.out.println("here is get /post");
 
         String email = null;
@@ -90,14 +90,29 @@ public class PostController {
     //slice example
     //getAllPosts 메서드 대체 후 해당 메서드 삭제.
     @GetMapping("/post/page")
-    public Slice<PostResponseDto> getPostByPage(@PageableDefault(sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable){
+    public Slice<PostResponseDto> getPostByPage(@PageableDefault(size=5, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable, Principal principal) {
         Slice<Post> slice = postRepository.findPostByPaging(pageable);
-        Slice<PostResponseDto> dtoPage = slice.map(post->new PostResponseDto(post,false));
+        Slice<PostResponseDto> dtoPage;
+
+        if(principal==null){
+            dtoPage = slice.map(post->new PostResponseDto(post,false));
+        }else{
+            String email = principal.getName();
+            Account account = accountRepository.findByEmail(email);
+            dtoPage=slice.map(post->{
+                if(likeRepository.existsByAccountAndPost(account,post)){
+                    return new PostResponseDto(post,true);
+                }else{
+                    return new PostResponseDto(post,false);
+                }
+            });
+        }
+
         return dtoPage;
     }
 
     @GetMapping("/post/my")
-    public ResponseEntity getMyPosts(Principal principal){
+    public ResponseEntity getMyPosts(Principal principal) {
         System.out.println("here is get /post/my");
 
         String email = principal.getName();
@@ -108,11 +123,11 @@ public class PostController {
 
         List<PostResponseDto> postList = new ArrayList<>();
 
-        for(Post post:posts){
-            if(likeRepository.existsByAccountAndPost(account,post)){
-                postList.add(new PostResponseDto(post,true));
-            }else{
-                postList.add(new PostResponseDto(post,false));
+        for (Post post : posts) {
+            if (likeRepository.existsByAccountAndPost(account, post)) {
+                postList.add(new PostResponseDto(post, true));
+            } else {
+                postList.add(new PostResponseDto(post, false));
             }
         }
 
@@ -122,7 +137,7 @@ public class PostController {
     }
 
     @GetMapping("/post/my/like")
-    public ResponseEntity getMyLikePosts(Principal principal){
+    public ResponseEntity getMyLikePosts(Principal principal) {
         System.out.println("here is get /post/my/like");
 
         String email = principal.getName();
@@ -133,9 +148,9 @@ public class PostController {
 
         List<PostResponseDto> postList = new ArrayList<>();
 
-        for(Like like: likes){
+        for (Like like : likes) {
 
-            postList.add(new PostResponseDto(like.getPost(),true));
+            postList.add(new PostResponseDto(like.getPost(), true));
         }
 
         return ResponseEntity.ok(postList);
@@ -146,15 +161,15 @@ public class PostController {
         Resource resource = postService.loadFileAsResource(fileName);
 
         String contentType = null;
-        contentType=request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+        contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
 
-        if(contentType==null){
-            contentType="application/octet-stream";
+        if (contentType == null) {
+            contentType = "application/octet-stream";
         }
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+resource.getFilename()+"\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
 
     }
