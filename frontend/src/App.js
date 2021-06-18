@@ -73,6 +73,7 @@ class App extends Component {
   handlePost() {
     const newState = Object.assign(this.state, { showPostModal: false });
     this.setState(newState);
+    window.location.replace("/");
   }
 
   render() {

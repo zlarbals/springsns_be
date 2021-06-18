@@ -21,13 +21,12 @@ function getPosts(path, jwt, setPosts, state, history) {
       }
     })
     .then((json) => {
-      if (JSON.stringify(state.posts) !== JSON.stringify(json)) {
+      if (!state.isLast) {
         setPosts(json);
       }
     })
     .catch((error) => {
       alert("게시글 가져오기에 실패했습니다.");
-      //history.goBack();
       history.push("/");
     });
 }
@@ -37,6 +36,8 @@ class Posts extends React.Component {
     super(props);
     this.state = {
       posts: [],
+      page: 0,
+      isLast: false,
     };
     this.setPosts = this.setPosts.bind(this);
   }
@@ -44,18 +45,45 @@ class Posts extends React.Component {
   componentDidMount() {
     const jwt = cookie.getJSON("X-AUTH-TOKEN");
 
-    getPosts("/post", jwt, this.setPosts, this.state, this.props.history);
+    const path = "/post?page=" + this.state.page;
+    getPosts(path, jwt, this.setPosts, this.state, this.props.history);
+    window.addEventListener("scroll", this.infiniteScroll);
   }
 
-  componentDidUpdate() {
-    const jwt = cookie.getJSON("X-AUTH-TOKEN");
-
-    getPosts("/post", jwt, this.setPosts, this.state, this.props.history);
+  componentWillUnmount() {
+    window.removeEventListener("scroll", this.infiniteScroll);
   }
+
+  infiniteScroll = () => {
+    const { documentElement, body } = document;
+    const page = this.state.page;
+
+    const scrollHeight = Math.max(
+      documentElement.scrollHeight,
+      body.scrollHeight
+    );
+    const scrollTop = Math.max(documentElement.scrollTop, body.scrollTop);
+    const clientHeight = documentElement.clientHeight;
+
+    if (!this.state.isLast && scrollTop + clientHeight >= scrollHeight) {
+      this.setState({
+        page: page + 1,
+      });
+
+      const jwt = cookie.getJSON("X-AUTH-TOKEN");
+      const path = "/post?page=" + this.state.page;
+      getPosts(path, jwt, this.setPosts, this.state, this.props.history);
+    }
+  };
 
   setPosts(json) {
+    const posts = this.state.posts;
+    const newPosts = json.content;
+    const isLast = json.last;
+    console.log(json);
     this.setState({
-      posts: json,
+      posts: [...posts, ...newPosts],
+      isLast: isLast,
     });
   }
 

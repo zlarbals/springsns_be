@@ -70,26 +70,26 @@ public class PostController {
         return ResponseEntity.ok().body(postResponseDto);
     }
 
-    @GetMapping("/post")
-    public ResponseEntity getAllPosts(Principal principal) {
-        System.out.println("here is get /post");
-
-        String email = null;
-
-        if (principal != null) {
-            email = principal.getName();
-        }
-
-        //모든 post 가져오기.
-        List<PostResponseDto> postList = postService.getAllPosts(email);
-
-
-        return ResponseEntity.ok(postList);
-    }
+//    @GetMapping("/post")
+//    public ResponseEntity getAllPosts(Principal principal) {
+//        System.out.println("here is get /post");
+//
+//        String email = null;
+//
+//        if (principal != null) {
+//            email = principal.getName();
+//        }
+//
+//        //모든 post 가져오기.
+//        List<PostResponseDto> postList = postService.getAllPosts(email);
+//
+//
+//        return ResponseEntity.ok(postList);
+//    }
 
     //slice example
     //getAllPosts 메서드 대체 후 해당 메서드 삭제.
-    @GetMapping("/post/page")
+    @GetMapping("/post")
     public Slice<PostResponseDto> getPostByPage(@PageableDefault(size=5, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable, Principal principal) {
         Slice<Post> slice = postRepository.findPostByPaging(pageable);
         Slice<PostResponseDto> dtoPage;
