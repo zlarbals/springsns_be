@@ -1,7 +1,6 @@
 package com.springsns.Post;
 
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 

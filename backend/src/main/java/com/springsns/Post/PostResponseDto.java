@@ -2,12 +2,6 @@ package com.springsns.Post;
 
 import com.springsns.domain.Post;
 import lombok.Getter;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
-import org.springframework.core.io.Resource;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 @Getter
 public class PostResponseDto {

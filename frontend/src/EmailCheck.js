@@ -28,6 +28,7 @@ async function getEmailVerify(emailCheckToken, email, history) {
 class EmailCheck extends React.Component {
   render() {
     const query = queryString.parse(this.props.location.search);
+    console.log(query.email);
     getEmailVerify(query.token, query.email, this.props.history);
 
     return null;

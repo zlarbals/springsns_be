@@ -3,6 +3,7 @@ import cookie from "js-cookie";
 import { Modal, ModalHeader, ModalBody } from "reactstrap";
 
 function submitSignInRequest(path, requestBody, handleSignedIn, handleError) {
+  console.log(requestBody);
   fetch(path, {
     method: "POST",
     headers: {
@@ -37,8 +38,9 @@ function submitSignUpRequest(path, requestBody, handleError, showSignInModal) {
     },
     body: JSON.stringify(requestBody),
   })
-    .then((response) => response.json)
+    .then((response) => response.json())
     .then((json) => {
+      console.log(json.error);
       if (json.error === undefined || !json.error) {
         showSignInModal();
       } else {
@@ -69,10 +71,16 @@ class SignInForm extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
+    const userInfo = this.state;
+
+    const requestBody = {
+      email: userInfo.email,
+      password: userInfo.password,
+    };
 
     submitSignInRequest(
       "/users/signin",
-      this.state,
+      requestBody,
       this.props.handleSignedIn,
       this.handleError
     );
