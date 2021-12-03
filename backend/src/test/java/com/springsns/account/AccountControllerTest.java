@@ -22,7 +22,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-//@Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
 class AccountControllerTest {
@@ -48,6 +47,7 @@ class AccountControllerTest {
         mockMvc.perform(get("/check-email-token")
                 .param("token", "sdfjslwfs")
                 .param("email", "email@email.com"))
+                .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
 
@@ -55,17 +55,14 @@ class AccountControllerTest {
     @Transactional
     @Test
     void checkEmailTokenWithCorrectInput() throws Exception {
-        Account account = Account.builder()
-                .email("email1@email.com")
-                .password("12345678")
-                .nickname("email1")
-                .build();
-        Account newAccount = accountRepository.save(account);
-        newAccount.generateEmailCheckToken();
+        registerAccount("email1","email1@email.com","12345678");
+
+        Account account = accountRepository.findByEmail("email1@email.com");
 
         mockMvc.perform(get("/check-email-token")
-                .param("token", newAccount.getEmailCheckToken())
-                .param("email", newAccount.getEmail()))
+                .param("token", account.getEmailCheckToken())
+                .param("email", account.getEmail()))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.emailVerified").value(true))
                 .andExpect(jsonPath("$.user.email").value("email1@email.com"));
@@ -76,17 +73,14 @@ class AccountControllerTest {
     @Transactional
     @Test
     void checkEmailTokenWithCorrectAccountWrongToken() throws Exception{
-        Account account = Account.builder()
-                .email("email2@email.com")
-                .password("12345678")
-                .nickname("email2")
-                .build();
-        Account newAccount = accountRepository.save(account);
-        newAccount.generateEmailCheckToken();
+        registerAccount("email2","email2@email.com","12345678");
+
+        Account account = accountRepository.findByEmail("email2@email.com");
 
         mockMvc.perform(get("/check-email-token")
                         .param("token", "WrongToken")
-                        .param("email", newAccount.getEmail()))
+                        .param("email", account.getEmail()))
+                .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
 
@@ -122,8 +116,10 @@ class AccountControllerTest {
     @DisplayName("회원 가입 처리 - 이메일 중복")
     @Test
     void signUpSubmitWithDuplicateEmail() throws Exception{
+        registerAccount("signup2","signup2@email.com","12345678");
+
         SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup1@email.com");
+        signUpForm.setEmail("signup2@email.com");
         signUpForm.setNickname("signupduplicate");
         signUpForm.setPassword("12345678");
 
@@ -133,17 +129,19 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
-        Account account = accountRepository.findByEmail("signup1@email.com");
+        Account account = accountRepository.findByEmail("signup2@email.com");
         assertNotNull(account);
-        assertEquals(account.getNickname(),"signup1");
+        assertEquals(account.getNickname(),"signup2");
     }
 
     @DisplayName("회원 가입 처리 - 닉네임 중복")
     @Test
     void signUpSubmitWithDuplicateNickname() throws Exception{
+        registerAccount("signup3","signup3@email.com","12345678");
+
         SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signupduplicate@email.com");
-        signUpForm.setNickname("signup1");
+        signUpForm.setEmail("nicknameduplicate@email.com");
+        signUpForm.setNickname("signup3");
         signUpForm.setPassword("12345678");
 
         String json = objectMapper.writeValueAsString(signUpForm);
@@ -152,7 +150,7 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
-        Account account = accountRepository.findByEmail("signupduplicate@email.com");
+        Account account = accountRepository.findByEmail("nicknameduplicate@email.com");
         assertNull(account);
     }
 
@@ -160,8 +158,8 @@ class AccountControllerTest {
     @Test
     void signUpSubmitWithWrongEmail() throws Exception {
         SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup2...");
-        signUpForm.setNickname("signup2");
+        signUpForm.setEmail("signup4...");
+        signUpForm.setNickname("signup4");
         signUpForm.setPassword("12345678");
 
         String json = objectMapper.writeValueAsString(signUpForm);
@@ -170,7 +168,7 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
-        Account account = accountRepository.findByEmail("signup2...");
+        Account account = accountRepository.findByEmail("signup4...");
         assertNull(account);
     }
 
@@ -178,8 +176,8 @@ class AccountControllerTest {
     @Test
     void signUpSubmitWithWrongNickname() throws Exception {
         SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup3@email.com");
-        signUpForm.setNickname("signup3#");
+        signUpForm.setEmail("signup5@email.com");
+        signUpForm.setNickname("signup5#");
         signUpForm.setPassword("12345678");
 
         String json = objectMapper.writeValueAsString(signUpForm);
@@ -188,7 +186,7 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
-        Account account = accountRepository.findByEmail("signup3@email.com");
+        Account account = accountRepository.findByEmail("signup5@email.com");
         assertNull(account);
     }
 
@@ -196,8 +194,8 @@ class AccountControllerTest {
     @Test
     void signUpSubmitWithWrongPassword() throws Exception {
         SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup4@email.com");
-        signUpForm.setNickname("signup4");
+        signUpForm.setEmail("signup6@email.com");
+        signUpForm.setNickname("signup6");
         signUpForm.setPassword("11");
 
         String json = objectMapper.writeValueAsString(signUpForm);
@@ -206,17 +204,17 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
-        Account account = accountRepository.findByEmail("signup4@email.com");
+        Account account = accountRepository.findByEmail("signup6@email.com");
         assertNull(account);
     }
 
     @DisplayName("로그인 처리 - 입력값 정상")
     @Test
     void signInWithCorrectInput() throws Exception{
-        //위에서 회원가입한 계정과 연동되므로 반드시 전체 테스트 할것.
-        //개별적으로 테스트 할 때도 성공하도록 수정할 필요 있음.
+        registerAccount("signin1","signin1@email.com","12345678");
+
         SignInForm signInForm = new SignInForm();
-        signInForm.setEmail("signup1@email.com");
+        signInForm.setEmail("signin1@email.com");
         signInForm.setPassword("12345678");
 
         String json = objectMapper.writeValueAsString(signInForm);
@@ -228,14 +226,15 @@ class AccountControllerTest {
     @DisplayName("로그인 처리 - 잘못된 패스워드")
     @Test
     void signInWithWrongPassword() throws Exception{
-        //위에서 회원가입한 계정과 연동되므로 반드시 전체 테스트 할것.
-        //개별적으로 테스트 할 때도 성공하도록 수정할 필요 있음.
+        registerAccount("signin2","signin2@email.com","12345678");
+
         SignInForm signInForm = new SignInForm();
-        signInForm.setEmail("signup1@email.com");
+        signInForm.setEmail("signin21@email.com");
         signInForm.setPassword("87654321");
 
         String json = objectMapper.writeValueAsString(signInForm);
         mockMvc.perform(post("/users/signin").contentType(MediaType.APPLICATION_JSON).content(json))
+                .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
 
@@ -243,16 +242,25 @@ class AccountControllerTest {
     @Test
     void signInWithWrongEmail() throws Exception{
         SignInForm signInForm = new SignInForm();
-        signInForm.setEmail("signin1@email.com");
-        signInForm.setPassword("87654321");
+        signInForm.setEmail("signin3@email.com");
+        signInForm.setPassword("12345678");
 
         String json = objectMapper.writeValueAsString(signInForm);
         mockMvc.perform(post("/users/signin").contentType(MediaType.APPLICATION_JSON).content(json))
+                .andDo(print())
                 .andExpect(status().is4xxClientError());
 
-        Account account = accountRepository.findByEmail("signin1@email.com");
+        Account account = accountRepository.findByEmail("signin3@email.com");
 
         assertNull(account);
+    }
+
+    private void registerAccount(String nickname, String email, String password) {
+        SignUpForm signUpForm = new SignUpForm();
+        signUpForm.setNickname(nickname);
+        signUpForm.setEmail(email);
+        signUpForm.setPassword(password);
+        accountService.processNewAccount(signUpForm);
     }
 
 }
