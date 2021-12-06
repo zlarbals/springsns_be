@@ -81,7 +81,7 @@ public class AccountService {
 
     private void sendSignUpConfirmEmail(Account newAccount) {
         Context context = new Context(); // 모델이라고 생각하면 된다.
-        context.setVariable("link","/check-email-token?token=" + newAccount.getEmailCheckToken() + "&email=" + newAccount.getEmail());
+        context.setVariable("link","/account/check-email-token?token=" + newAccount.getEmailCheckToken() + "&email=" + newAccount.getEmail());
         context.setVariable("nickname",newAccount.getNickname());
         context.setVariable("linkName","이메일 인증하기");
         context.setVariable("message","Spring SNS 서비스를 사용하려면 링크를 클릭하세요.");
@@ -97,9 +97,9 @@ public class AccountService {
         emailService.sendEmail(emailMessage);
     }
 
-    public boolean isValidPassword(String password, String encodedPassword) {
-        return passwordEncoder.matches(password, encodedPassword);
-    }
+//    public boolean isValidPassword(String password, String encodedPassword) {
+//        return passwordEncoder.matches(password, encodedPassword);
+//    }
 
     @Transactional
     public AccountResponseDto completeSignUp(Account account) {

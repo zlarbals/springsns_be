@@ -36,9 +36,9 @@ public class AccountController {
         webDataBinder.addValidators(signInFormValidator);
     }
 
-    @PostMapping("/sign-up")
+    @PostMapping("/account")
     public ResponseEntity signUpSubmit(@Valid @RequestBody SignUpForm signUpForm, Errors errors) {
-        System.out.println("here is /sign-up");
+        System.out.println("post /account");
         if (errors.hasErrors()) {
             Map<String, Object> resultMap = new HashMap<>();
 
@@ -58,9 +58,9 @@ public class AccountController {
         return ResponseEntity.ok().body(accountResponseDto);
     }
 
-    @PostMapping("/users/signin")
+    @PostMapping("/account/sign-in")
     public ResponseEntity signInSubmit(@Valid @RequestBody SignInForm signInForm, Errors errors) {
-        System.out.println("here is /users/signin");
+        System.out.println("post /account/sign-in");
         if(errors.hasErrors()){
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
@@ -72,9 +72,9 @@ public class AccountController {
         return new ResponseEntity(resultMap, HttpStatus.OK);
     }
 
-    @GetMapping("/check-email-token")
+    @GetMapping("/account/check-email-token")
     public ResponseEntity checkEmailToken(String token, String email) {
-        System.out.println("here is /check-email-token");
+        System.out.println("get /account/check-email-token");
 
         //Account account = accountRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
         Account account = accountRepository.findByEmail(email);
@@ -93,9 +93,9 @@ public class AccountController {
         return new ResponseEntity(resultMap, HttpStatus.OK);
     }
 
-    @GetMapping("/account/email")
+    @GetMapping("/account/resend-email-token")
     public ResponseEntity sendEmail(Principal principal){
-        System.out.println("here is /account/Email");
+        System.out.println("get /account/resend-email-token");
         HashMap<String,Object> resultMap = new HashMap<>();
         String email = principal.getName();
 
@@ -106,6 +106,24 @@ public class AccountController {
         }else{
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    //URI만 작성.
+    //TODO 비밀번호 변경 구현.  TDD로 도전 해볼 것.
+    @PatchMapping("/account")
+    public ResponseEntity changePassword(Principal principal){
+        System.out.println("patch /account");
+
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
+    //URI만 작성.
+    //TODO 회원탈퇴 구현.   TDD로 도전 해볼 것.
+    @DeleteMapping("/account")
+    public ResponseEntity deleteAccount(Principal principal){
+        System.out.println("delete /account");
+
+        return new ResponseEntity(HttpStatus.OK);
     }
 
 

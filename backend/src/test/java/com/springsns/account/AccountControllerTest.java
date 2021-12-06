@@ -44,7 +44,7 @@ class AccountControllerTest {
     @DisplayName("인증 메일 확인 - 계정 없음")
     @Test
     void checkEmailTokenWithNoAccount() throws Exception {
-        mockMvc.perform(get("/check-email-token")
+        mockMvc.perform(get("/account/check-email-token")
                 .param("token", "sdfjslwfs")
                 .param("email", "email@email.com"))
                 .andDo(print())
@@ -59,7 +59,7 @@ class AccountControllerTest {
 
         Account account = accountRepository.findByEmail("email1@email.com");
 
-        mockMvc.perform(get("/check-email-token")
+        mockMvc.perform(get("/account/check-email-token")
                 .param("token", account.getEmailCheckToken())
                 .param("email", account.getEmail()))
                 .andDo(print())
@@ -77,7 +77,7 @@ class AccountControllerTest {
 
         Account account = accountRepository.findByEmail("email2@email.com");
 
-        mockMvc.perform(get("/check-email-token")
+        mockMvc.perform(get("/account/check-email-token")
                         .param("token", "WrongToken")
                         .param("email", account.getEmail()))
                 .andDo(print())
@@ -99,7 +99,7 @@ class AccountControllerTest {
 //                .andDo(print())
 //                .andExpect(status().is4xxClientError());
 
-        mockMvc.perform(post("/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("email").value("signup1@email.com"))
@@ -125,7 +125,7 @@ class AccountControllerTest {
 
         String json = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
@@ -146,7 +146,7 @@ class AccountControllerTest {
 
         String json = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
@@ -164,7 +164,7 @@ class AccountControllerTest {
 
         String json = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
@@ -182,7 +182,7 @@ class AccountControllerTest {
 
         String json = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
@@ -200,7 +200,7 @@ class AccountControllerTest {
 
         String json = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
@@ -218,7 +218,7 @@ class AccountControllerTest {
         signInForm.setPassword("12345678");
 
         String json = objectMapper.writeValueAsString(signInForm);
-        mockMvc.perform(post("/users/signin").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -233,7 +233,7 @@ class AccountControllerTest {
         signInForm.setPassword("87654321");
 
         String json = objectMapper.writeValueAsString(signInForm);
-        mockMvc.perform(post("/users/signin").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
@@ -246,7 +246,7 @@ class AccountControllerTest {
         signInForm.setPassword("12345678");
 
         String json = objectMapper.writeValueAsString(signInForm);
-        mockMvc.perform(post("/users/signin").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
