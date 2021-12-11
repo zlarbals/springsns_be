@@ -97,9 +97,9 @@ public class AccountService {
         emailService.sendEmail(emailMessage);
     }
 
-//    public boolean isValidPassword(String password, String encodedPassword) {
-//        return passwordEncoder.matches(password, encodedPassword);
-//    }
+    public boolean isValidPassword(String password, String encodedPassword) {
+        return passwordEncoder.matches(password, encodedPassword);
+    }
 
     @Transactional
     public AccountResponseDto completeSignUp(Account account) {

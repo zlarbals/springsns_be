@@ -111,8 +111,15 @@ public class AccountController {
     //URI만 작성.
     //TODO 비밀번호 변경 구현.  TDD로 도전 해볼 것.
     @PatchMapping("/account")
-    public ResponseEntity changePassword(Principal principal){
+    public ResponseEntity changePassword(@RequestBody String password,Principal principal){
         System.out.println("patch /account");
+        String email = principal.getName();
+
+        Account account = accountRepository.findByEmail(email);
+
+        if(!accountService.isValidPassword(password,account.getPassword())){
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
 
         return new ResponseEntity(HttpStatus.OK);
     }

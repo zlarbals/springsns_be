@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springsns.domain.Account;
 import com.springsns.mail.EmailMessage;
 import com.springsns.mail.EmailService;
+import org.json.JSONObject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -12,13 +13,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.then;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -37,6 +40,9 @@ class AccountControllerTest {
 
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @MockBean
     EmailService emailService;
@@ -255,12 +261,93 @@ class AccountControllerTest {
         assertNull(account);
     }
 
+    @DisplayName("패스워드 변경 - 잘못된 패스워드로 변경")
+    void changePasswordWithWrongPassword() throws Exception{
+        //계정 등록
+        String nickname = "changepassword1";
+        String email = "changepassword1@email.com";
+        String password = "12345678";
+        registerAccount(nickname,email,password);
+
+        Object jwt = getJWTToken(email,password);
+
+        //request body
+        JSONObject json = new JSONObject();
+        String passwordToChange = "11";
+        json.put("password",passwordToChange);
+
+        //jwt를 포함하고 있어야 함.
+        //body에 패스워드 받고 알맞은 패스워드인지 확인
+        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN",jwt).content(json.toString()))
+                .andDo(print())
+                .andExpect(status().is4xxClientError());
+
+        Account account = accountRepository.findByEmail("changepassword1@email.com");
+
+        assertEquals(false,passwordEncoder.matches(account.getPassword(),passwordToChange));
+
+    }
+
+    @DisplayName("패스워드 변경 - 정상적인 패스워드로 변경")
+    void changePasswordWithCorrectPassword() throws Exception{
+        //계정 등록
+        String nickname = "changepassword2";
+        String email = "changepassword2@email.com";
+        String password = "12345678";
+        registerAccount(nickname,email,password);
+
+        Object jwt = getJWTToken(email,password);
+
+        //request body
+        JSONObject json = new JSONObject();
+        String passwordToChange = "87654321";
+        json.put("password",passwordToChange);
+
+        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN",jwt).content(json.toString()))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        Account account = accountRepository.findByEmail("changepassword2@email.com");
+
+        assertEquals(true,passwordEncoder.matches(account.getPassword(),passwordToChange));
+    }
+
+    @DisplayName("패스워드 변경 - JWT 토큰 없음")
+    void changePasswordWithoutJWTToken() throws Exception{
+        //계정 등록
+        String nickname = "changepassword3";
+        String email = "changepassword3@email.com";
+        String password = "12345678";
+        registerAccount(nickname,email,password);
+
+        //request body
+        JSONObject json = new JSONObject();
+        String passwordToChange = "87654321";
+        json.put("password",passwordToChange);
+
+        mockMvc.perform(patch("/account").content(json.toString()))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+
+        Account account = accountRepository.findByEmail("changepassword3@email.com");
+
+        assertEquals(false,passwordEncoder.matches(account.getPassword(),passwordToChange));
+    }
+
     private void registerAccount(String nickname, String email, String password) {
         SignUpForm signUpForm = new SignUpForm();
         signUpForm.setNickname(nickname);
         signUpForm.setEmail(email);
         signUpForm.setPassword(password);
         accountService.processNewAccount(signUpForm);
+    }
+
+    private Object getJWTToken(String email, String password) {
+        SignInForm signInForm = new SignInForm();
+        signInForm.setEmail(email);
+        signInForm.setPassword(password);
+        Map<String, Object> data = accountService.createJWTToken(signInForm);
+        return data.get("jwtToken");
     }
 
 }
