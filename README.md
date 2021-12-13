@@ -1,27 +1,16 @@
-# Account
+# API
 
-## <li>회원 가입</li>
+## Account
 
-<br></br>
-
-## <li>로그인</li>
-
-<br></br>
-
-## <li>비밀번호 변경</li>
-
-<br></br>
-
-## <li>회원 탈퇴</li>
+|        기능        | HTTP Method |             URI             |
+| :----------------: | :---------: | :-------------------------: |
+|     회원 가입      |    POST     |          /account           |
+|   비밀번호 변경    |    PATCH    |          /account           |
+|     회원 탈퇴      |   DELETE    |          /account           |
+|       로그인       |    POST     |      /account/sign-in       |
+|    이메일 인증     |     GET     | /account/check-email-token  |
+| 인증 이메일 재전송 |     GET     | /account/resend-email-token |
 
 <br></br>
 
-## <li>이메일 인증</li>
-
-<br></br>
-
-## <li>인증 이메일 재전송</li>
-
-<br></br>
-
-# Post
+## Post

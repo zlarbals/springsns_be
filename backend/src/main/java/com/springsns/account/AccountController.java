@@ -130,6 +130,9 @@ public class AccountController {
     public ResponseEntity deleteAccount(Principal principal){
         System.out.println("delete /account");
 
+        String email = principal.getName();
+        accountService.processDeleteAccount(email);
+
         return new ResponseEntity(HttpStatus.OK);
     }
 

@@ -52,6 +52,8 @@ public class Account extends BaseTimeEntity implements UserDetails{
 
     private LocalDateTime emailVerifiedDate;
 
+    private boolean isActivate;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default
     private List<String> roles = new ArrayList<>();

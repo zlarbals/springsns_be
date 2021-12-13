@@ -47,6 +47,18 @@ public class AccountService {
         return accountResponseDto;
     }
 
+    @Transactional
+    public void processDeleteAccount(String email) {
+        Account account = accountRepository.findByEmail(email);
+
+        //계정 닉네임 변경
+        account.setNickname("LeftUser");
+        //계정 비활성화
+        account.setActivate(false);
+        //계정 삭제 확인 email 보내기.
+        sendDeleteConfirmEmail(email);
+    }
+
     public boolean resendEmail(String email){
         Account account = accountRepository.findByEmail(email);
 
@@ -55,10 +67,11 @@ public class AccountService {
         }
 
         sendSignUpConfirmEmail(account);
-
-        //AccountResponseDto accountResponseDto = new AccountResponseDto(account);
-
         return true;
+    }
+
+    public boolean isValidPassword(String password, String encodedPassword) {
+        return passwordEncoder.matches(password, encodedPassword);
     }
 
     //회원 가입 처리
@@ -70,6 +83,7 @@ public class AccountService {
                 .posts(new ArrayList<>())
                 .nickname(signUpForm.getNickname())
                 .password(passwordEncoder.encode(signUpForm.getPassword()))   //패스워드 encoding.
+                .isActivate(true)
                 .roles(Collections.singletonList("ROLE_USER")) //최초 가입시 USER로 설정
                 .build();
         //회원 저장
@@ -86,7 +100,7 @@ public class AccountService {
         context.setVariable("linkName","이메일 인증하기");
         context.setVariable("message","Spring SNS 서비스를 사용하려면 링크를 클릭하세요.");
         context.setVariable("host",appProperties.getHost());
-        String message = templateEngine.process("mail/simple-link", context);
+        String message = templateEngine.process("mail/send-email-authentication-token", context);
 
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(newAccount.getEmail())
@@ -97,8 +111,19 @@ public class AccountService {
         emailService.sendEmail(emailMessage);
     }
 
-    public boolean isValidPassword(String password, String encodedPassword) {
-        return passwordEncoder.matches(password, encodedPassword);
+    private void sendDeleteConfirmEmail(String email) {
+        Context context = new Context();
+        context.setVariable("email",email);
+
+        String message = templateEngine.process("mail/inform-delete",context);
+
+        EmailMessage emailMessage = EmailMessage.builder()
+                .to(email)
+                .subject("SpringSNS, 회원 탈퇴 확인 메일")
+                .message(message)
+                .build();
+
+        emailService.sendEmail(emailMessage);
     }
 
     @Transactional
@@ -125,4 +150,6 @@ public class AccountService {
 
         return resultMap;
     }
+
+
 }

@@ -22,7 +22,11 @@ public class SignInFormValidator implements Validator {
     @Override
     public void validate(Object o, Errors errors) {
         SignInForm signInForm = (SignInForm) o;
-        Account account = accountRepository.findByEmail(signInForm.getEmail());
+        //Account account = accountRepository.findByEmail(signInForm.getEmail());
+
+        //회원 탈퇴된 계정은 로그인 불가.
+        Account account = accountRepository.findActivateAccountByEmail(signInForm.getEmail());
+
         if(account==null){
             errors.rejectValue("email","invalid.email",new Object[]{signInForm.getEmail()},"로그인에 실패하였습니다.");
         }else{

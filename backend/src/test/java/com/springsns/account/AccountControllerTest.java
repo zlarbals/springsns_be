@@ -282,7 +282,7 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
-        Account account = accountRepository.findByEmail("changepassword1@email.com");
+        Account account = accountRepository.findByEmail(email);
 
         assertEquals(false,passwordEncoder.matches(account.getPassword(),passwordToChange));
 
@@ -307,13 +307,13 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        Account account = accountRepository.findByEmail("changepassword2@email.com");
+        Account account = accountRepository.findByEmail(email);
 
         assertEquals(true,passwordEncoder.matches(account.getPassword(),passwordToChange));
     }
 
-    @DisplayName("패스워드 변경 - JWT 토큰 없음")
-    void changePasswordWithoutJWTToken() throws Exception{
+    @DisplayName("패스워드 변경 - 잘못된 JWT 토큰")
+    void changePasswordWithWrongJWTToken() throws Exception{
         //계정 등록
         String nickname = "changepassword3";
         String email = "changepassword3@email.com";
@@ -325,13 +325,47 @@ class AccountControllerTest {
         String passwordToChange = "87654321";
         json.put("password",passwordToChange);
 
-        mockMvc.perform(patch("/account").content(json.toString()))
+        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN","WrongJWTToken").content(json.toString()))
                 .andDo(print())
                 .andExpect(status().isForbidden());
 
-        Account account = accountRepository.findByEmail("changepassword3@email.com");
+        Account account = accountRepository.findByEmail(email);
 
         assertEquals(false,passwordEncoder.matches(account.getPassword(),passwordToChange));
+    }
+
+    @DisplayName("계정 탈퇴 - 정상 JWT 토큰")
+    @Test
+    void deleteAccountWithCorrectJWTToken() throws Exception{
+        String nickname = "deleteAccount1";
+        String email = "deleteAccount1@email.com";
+        String password = "12345678";
+        registerAccount(nickname,email,password);
+
+        Object jwt = getJWTToken(email,password);
+
+        mockMvc.perform(delete("/account").header("X-AUTH-TOKEN",jwt))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        assertFalse(accountRepository.findByEmail(email).isActivate());
+        assertNull(accountRepository.findActivateAccountByEmail(email));
+    }
+
+    @DisplayName("계정 탈퇴 - 잘못된 JWT 토큰")
+    @Test
+    void deleteAccountWithWrongJWTToken() throws Exception{
+        String nickname = "deleteAccount2";
+        String email = "deleteAccount2@email.com";
+        String password = "12345678";
+        registerAccount(nickname,email,password);
+
+        mockMvc.perform(delete("/account").header("X-AUTH-TOKEN","WrongJWTToken"))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+
+        assertTrue(accountRepository.findByEmail(email).isActivate());
+        assertNotNull(accountRepository.findActivateAccountByEmail(email));
     }
 
     private void registerAccount(String nickname, String email, String password) {
