@@ -37,7 +37,7 @@ public class PostController {
     //현재 인증된 사용자의 정보를 Principal로 직접 접근할 수 있다.
     @PostMapping("/post")
     public ResponseEntity registerPost(@RequestPart(required = false) MultipartFile file, @RequestParam String content, Principal principal) throws IOException, NoSuchAlgorithmException {
-        System.out.println("here is post /post");
+        System.out.println("post /post");
         String email = principal.getName();
 
         Account account = accountRepository.findByEmail(email);
@@ -89,6 +89,7 @@ public class PostController {
     //getAllPosts 메서드 대체 후 해당 메서드 삭제.
     @GetMapping("/post")
     public Slice<PostResponseDto> getPostByPage(@PageableDefault(size=5, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable, Principal principal) {
+        System.out.println("get /post");
         Slice<Post> slice = postRepository.findPostByPaging(pageable);
         Slice<PostResponseDto> dtoPage;
 
@@ -109,13 +110,12 @@ public class PostController {
         return dtoPage;
     }
 
-    @GetMapping("/post/my")
-    public ResponseEntity getMyPosts(Principal principal) {
-        System.out.println("here is get /post/my");
+    //특정 유저가 작성한 게시글 가져오기
+    @GetMapping("/post/account/{nickname}")
+    public ResponseEntity getAccountPosts(@PathVariable String nickname) {
+        System.out.println("get /post/account/{nickname}");
 
-        String email = principal.getName();
-
-        Account account = accountRepository.findByEmail(email);
+        Account account = accountRepository.findByNickname(nickname);
 
         List<Post> posts = account.getPosts();
 
@@ -130,33 +130,11 @@ public class PostController {
         }
 
         return ResponseEntity.ok(postList);
-
-
     }
 
-    @GetMapping("/post/my/like")
-    public ResponseEntity getMyLikePosts(Principal principal) {
-        System.out.println("here is get /post/my/like");
-
-        String email = principal.getName();
-
-        Account account = accountRepository.findByEmail(email);
-
-        List<Like> likes = account.getLikes();
-
-        List<PostResponseDto> postList = new ArrayList<>();
-
-        for (Like like : likes) {
-
-            postList.add(new PostResponseDto(like.getPost(), true));
-        }
-
-        return ResponseEntity.ok(postList);
-    }
-
-    @GetMapping("/post/image/{fileName:.+}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) throws IOException {
-        Resource resource = postService.loadFileAsResource(fileName);
+    @GetMapping("/post/image/{imageName:.+}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String imageName, HttpServletRequest request) throws IOException {
+        Resource resource = postService.loadFileAsResource(imageName);
 
         String contentType = null;
         contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());

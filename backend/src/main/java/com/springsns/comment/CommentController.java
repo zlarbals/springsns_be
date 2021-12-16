@@ -27,7 +27,7 @@ public class CommentController {
     @GetMapping("/comment/post/{postId}")
     public ResponseEntity getPostComment(@PathVariable Long postId){
 
-        System.out.println("here is get com.springsns.comment");
+        System.out.println("get /comment/post/{postId}");
 
         List<CommentResponseDto> result=commentService.findAllComments(postId);
         Map<String,Object> resultMap=new HashMap<>();
@@ -38,7 +38,7 @@ public class CommentController {
 
     @PostMapping("/comment/post/{postId}")
     public ResponseEntity createComment(@PathVariable Long postId, @RequestBody CommentForm commentForm, Principal principal){
-        System.out.println("here is post com.springsns.comment");
+        System.out.println("post /comment/post/{postId}");
         String email = principal.getName();
         Account account = accountRepository.findByEmail(email);
         Post post = postRepository.findById(postId).orElseThrow();
@@ -47,7 +47,6 @@ public class CommentController {
                 .account(account)
                 .post(post)
                 .content(commentForm.getContent())
-                //.postedAt(LocalDateTime.now())
                 .build();
 
         commentRepository.save(comment);
