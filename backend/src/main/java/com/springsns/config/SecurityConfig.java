@@ -33,7 +33,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/account/sign-in", "/account/check-email-token","/h2-console/*").permitAll()//모두 허용.
                 .antMatchers(HttpMethod.POST,"/account").permitAll()
-                .antMatchers(HttpMethod.GET, "/post","/post/image/*","/post/page").permitAll()//post 같은 경우 GET만 허용
+                .antMatchers(HttpMethod.GET, "/post","/post/image/*").permitAll()//post 같은 경우 GET만 허용
                 .anyRequest().hasRole("USER")
                 .and()
                 .headers().frameOptions().disable()

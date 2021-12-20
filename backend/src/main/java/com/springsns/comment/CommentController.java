@@ -41,6 +41,11 @@ public class CommentController {
         System.out.println("post /comment/post/{postId}");
         String email = principal.getName();
         Account account = accountRepository.findByEmail(email);
+
+        if(account==null || !account.isEmailVerified()){
+            return ResponseEntity.badRequest().build();
+        }
+
         Post post = postRepository.findById(postId).orElseThrow();
 
         Comment comment = Comment.builder()

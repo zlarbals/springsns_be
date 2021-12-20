@@ -24,5 +24,7 @@ public class Like extends BaseTimeEntity{
     public Like(Account account,Post post){
         this.account=account;
         this.post=post;
+
+        account.getLikes().add(this);
     }
 }

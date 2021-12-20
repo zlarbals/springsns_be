@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -156,7 +157,7 @@ class PostControllerTest {
 
     @DisplayName("게시글 가져오기(좋아요 표시) - 로그인한 사용자")
     @Test
-    void getPostTestWithSignInUser() throws Exception{
+    void getPostWithRegisteredUser() throws Exception{
         //인증된 사용자 등록
         String nickname = "getPostTest1";
         String email = "getPostTest1@email.com";
@@ -195,9 +196,9 @@ class PostControllerTest {
 
     }
 
-    @DisplayName("게시글 가져오기(좋아요 표시) - 로그아웃한 사용자")
+    @DisplayName("게시글 가져오기(좋아요 표시) - 등록 안된 사용자")
     @Test
-    void getPostTestWithSignOutUser() throws Exception{
+    void getPostWithUnregisteredUser() throws Exception{
         //인증된 사용자 등록
         String nickname = "getPostTest2";
         String email = "getPostTest2@email.com";
@@ -232,6 +233,76 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.content.[0].content").value(post.getContent()))
                 .andExpect(jsonPath("$.content.[0].like").value(false));
     }
+
+    @DisplayName("특정 유저의 게시글 가져오기 - 등록된 사용자")
+    @Test
+    void getPostFromSpecificUserWithRegisteredUser() throws Exception{
+        String postingNickname = "getPostTest3";
+        String postingEmail = "getPostTest3@email.com";
+        String postingPassword = "12345678";
+
+        registerAccount(postingNickname,postingEmail,postingPassword);
+
+        authenticateEmail(postingEmail);
+
+        Account account = accountRepository.findByEmail(postingEmail);
+
+        Post post = null;
+        for(int i=0;i<7;i++){
+            String content="GetPostSpecificUser"+i;
+            post = Post.builder()
+                    .account(account)
+                    .content(content)
+                    .postFile(null)
+                    .build();
+
+            postRepository.save(post);
+        }
+
+        String nickname = "getPostTest4";
+        String email = "getPostTest4@email.com";
+        String password = "12345678";
+
+        registerAccount(nickname,email,password);
+
+        Object jwt = getJWTToken(email,password);
+
+        mockMvc.perform(get("/post/account/"+postingNickname).header("X-AUTH-TOKEN",jwt))
+                .andDo(print())
+                .andExpect(jsonPath("$.[0].content").value(post.getContent()))
+                .andExpect(jsonPath("$",hasSize(7)));
+    }
+
+    @DisplayName("특정 유저의 게시글 가져오기 - 등록 안된 사용자")
+    @Test
+    void getPostFromSpecificUserWithUnregisteredUser() throws Exception{
+        String postingNickname = "getPostTest5";
+        String postingEmail = "getPostTest5@email.com";
+        String postingPassword = "12345678";
+
+        registerAccount(postingNickname,postingEmail,postingPassword);
+
+        authenticateEmail(postingEmail);
+
+        Account account = accountRepository.findByEmail(postingEmail);
+
+        Post post = null;
+        for(int i=0;i<7;i++){
+            String content="GetPostSpecificUser"+i;
+            post = Post.builder()
+                    .account(account)
+                    .content(content)
+                    .postFile(null)
+                    .build();
+
+            postRepository.save(post);
+        }
+
+        mockMvc.perform(get("/post/account/"+postingNickname))
+                .andDo(print())
+                .andExpect(status().is4xxClientError());
+    }
+
 
     private void registerAccount(String nickname, String email, String password) {
         SignUpForm signUpForm = new SignUpForm();

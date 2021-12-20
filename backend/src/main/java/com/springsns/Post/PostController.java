@@ -2,7 +2,6 @@ package com.springsns.Post;
 
 import com.springsns.account.AccountRepository;
 import com.springsns.domain.Account;
-import com.springsns.domain.Like;
 import com.springsns.domain.Post;
 import com.springsns.like.LikeRepository;
 import lombok.RequiredArgsConstructor;
@@ -121,13 +120,25 @@ public class PostController {
 
         List<PostResponseDto> postList = new ArrayList<>();
 
-        for (Post post : posts) {
-            if (likeRepository.existsByAccountAndPost(account, post)) {
-                postList.add(new PostResponseDto(post, true));
+        for(int i=posts.size()-1;i>=0;i--){
+            Post tempPost = posts.get(i);
+
+            if (likeRepository.existsByAccountAndPost(account, tempPost)) {
+                postList.add(new PostResponseDto(tempPost, true));
             } else {
-                postList.add(new PostResponseDto(post, false));
+                postList.add(new PostResponseDto(tempPost, false));
             }
         }
+
+//        for (Post post : posts) {
+//            if (likeRepository.existsByAccountAndPost(account, post)) {
+//                postList.add(new PostResponseDto(post, true));
+//            } else {
+//                postList.add(new PostResponseDto(post, false));
+//            }
+//        }
+
+
 
         return ResponseEntity.ok(postList);
     }
