@@ -70,8 +70,38 @@ public class AccountService {
         return true;
     }
 
-    public boolean isValidPassword(String password, String encodedPassword) {
-        return passwordEncoder.matches(password, encodedPassword);
+    @Transactional
+    public AccountResponseDto completeSignUp(Account account) {
+        account.setEmailVerified(true);
+        account.setEmailVerifiedDate(LocalDateTime.now());
+
+        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
+
+        return accountResponseDto;
+    }
+
+
+    public Map<String, Object> createJWTToken(SignInForm signInForm) {
+        Account account = accountRepository.findByEmail(signInForm.getEmail());
+        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
+
+        //jwt 토큰 생성
+        String jwtToken = jwtTokenProvider.createToken(account.getUsername(),account.getRoles());
+
+        Map<String,Object> resultMap = new HashMap<>();
+        resultMap.put("jwtToken",jwtToken);
+        resultMap.put("user",accountResponseDto);
+
+        return resultMap;
+    }
+
+    @Transactional
+    public AccountResponseDto changePassword(String password, String email) {
+        Account account = accountRepository.findByEmail(email);
+
+        account.setPassword(passwordEncoder.encode(password));
+
+        return new AccountResponseDto(account);
     }
 
     //회원 가입 처리
@@ -125,31 +155,4 @@ public class AccountService {
 
         emailService.sendEmail(emailMessage);
     }
-
-    @Transactional
-    public AccountResponseDto completeSignUp(Account account) {
-        account.setEmailVerified(true);
-        account.setEmailVerifiedDate(LocalDateTime.now());
-
-        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
-
-        return accountResponseDto;
-    }
-
-
-    public Map<String, Object> createJWTToken(SignInForm signInForm) {
-        Account account = accountRepository.findByEmail(signInForm.getEmail());
-        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
-
-        //jwt 토큰 생성
-        String jwtToken = jwtTokenProvider.createToken(account.getUsername(),account.getRoles());
-
-        Map<String,Object> resultMap = new HashMap<>();
-        resultMap.put("jwtToken",jwtToken);
-        resultMap.put("user",accountResponseDto);
-
-        return resultMap;
-    }
-
-
 }

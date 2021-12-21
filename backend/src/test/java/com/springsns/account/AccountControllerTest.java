@@ -289,6 +289,7 @@ class AccountControllerTest {
     }
 
     @DisplayName("패스워드 변경 - 정상적인 패스워드로 변경")
+    @Test
     void changePasswordWithCorrectPassword() throws Exception{
         //계정 등록
         String nickname = "changepassword2";
@@ -299,20 +300,22 @@ class AccountControllerTest {
         Object jwt = getJWTToken(email,password);
 
         //request body
-        JSONObject json = new JSONObject();
         String passwordToChange = "87654321";
-        json.put("password",passwordToChange);
+        ChangePasswordForm changePasswordForm = new ChangePasswordForm();
+        changePasswordForm.setPassword(passwordToChange);
+        String body = objectMapper.writeValueAsString(changePasswordForm);
 
-        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN",jwt).content(json.toString()))
+        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN",jwt).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         Account account = accountRepository.findByEmail(email);
 
-        assertEquals(true,passwordEncoder.matches(account.getPassword(),passwordToChange));
+        assertTrue(passwordEncoder.matches(passwordToChange, account.getPassword()));
     }
 
     @DisplayName("패스워드 변경 - 잘못된 JWT 토큰")
+    @Test
     void changePasswordWithWrongJWTToken() throws Exception{
         //계정 등록
         String nickname = "changepassword3";
@@ -331,7 +334,7 @@ class AccountControllerTest {
 
         Account account = accountRepository.findByEmail(email);
 
-        assertEquals(false,passwordEncoder.matches(account.getPassword(),passwordToChange));
+        assertFalse(passwordEncoder.matches(passwordToChange, account.getPassword()));
     }
 
     @DisplayName("계정 탈퇴 - 정상 JWT 토큰")
