@@ -1,12 +1,10 @@
 package com.springsns.Post;
 
-import com.springsns.Util.MD5Generator;
 import com.springsns.account.AccountRepository;
 import com.springsns.domain.Account;
 import com.springsns.domain.Post;
 import com.springsns.like.LikeRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -14,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -67,10 +64,6 @@ public class PostService {
         return result;
     }
 
-//    public List<PostResponseDto> getAllPosts_(String email){
-//        //강의 한번 더 보고 다시 해보자.
-//    }
-
     public PostFile processPostFile(MultipartFile file) throws IOException {
 
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
@@ -93,4 +86,21 @@ public class PostService {
         return resource;
     }
 
+    public List<PostResponseDto> searchPosts(String keyword,String email) {
+
+        Account account = accountRepository.findByEmail(email);
+
+        List<Post> postsByContentContaining = postRepository.findPostsByContentContaining(keyword);
+
+        List<PostResponseDto> result = new ArrayList<>();
+        for(Post post: postsByContentContaining){
+            if (likeRepository.existsByAccountAndPost(account, post)) {
+                result.add(new PostResponseDto(post, true));
+            } else {
+                result.add(new PostResponseDto(post, false));
+            }
+        }
+
+        return result;
+    }
 }

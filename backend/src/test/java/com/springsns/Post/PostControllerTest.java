@@ -303,6 +303,133 @@ class PostControllerTest {
                 .andExpect(status().is4xxClientError());
     }
 
+    @DisplayName("게시글 검색 - 등록 안된 사용자")
+    @Test
+    void searchPostWithUnregisteredUser() throws Exception{
+        String postingNickname = "searchPostTest1";
+        String postingEmail = "searchPostTest1@email.com";
+        String postingPassword = "12345678";
+
+        registerAccount(postingNickname,postingEmail,postingPassword);
+
+        authenticateEmail(postingEmail);
+
+        Account account = accountRepository.findByEmail(postingEmail);
+
+        for(int i=0;i<7;i++){
+            String content=null;
+            if(i==1||i==2||i==4){
+                content = "search hello post test"+i;
+            }else{
+                content = "search post test"+i;
+            }
+
+            Post post= Post.builder()
+                    .account(account)
+                    .content(content)
+                    .postFile(null)
+                    .build();
+
+            postRepository.save(post);
+        }
+
+        String keyword = "hello";
+        mockMvc.perform(get("/post/search/"+keyword))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @DisplayName("게시글 검색 - 이메일 인증 안된 사용자")
+    @Test
+    void searchPostWithUnauthenticatedUser() throws Exception{
+        String postingNickname = "searchPostTest2";
+        String postingEmail = "searchPostTest2@email.com";
+        String postingPassword = "12345678";
+
+        registerAccount(postingNickname,postingEmail,postingPassword);
+
+        authenticateEmail(postingEmail);
+
+        Account account = accountRepository.findByEmail(postingEmail);
+
+        for(int i=0;i<7;i++){
+            String content=null;
+            if(i==1||i==2||i==4){
+                content = "search hello post test"+i;
+            }else{
+                content = "search post test"+i;
+            }
+
+            Post post= Post.builder()
+                    .account(account)
+                    .content(content)
+                    .postFile(null)
+                    .build();
+
+            postRepository.save(post);
+        }
+
+        String nickname = "searchPostTest3";
+        String email = "searchPostTest3@email.com";
+        String password = "12345678";
+
+        registerAccount(nickname,email,password);
+
+        Object jwt = getJWTToken(email,password);
+
+        String keyword = "hello";
+        mockMvc.perform(get("/post/search/"+keyword).header("X-AUTH-TOKEN",jwt))
+                .andDo(print())
+                .andExpect(status().is4xxClientError());
+    }
+
+    @DisplayName("게시글 검색 - 인증된 사용자")
+    @Test
+    void searchPostWithAuthenticatedUser() throws Exception{
+        String postingNickname = "searchPostTest4";
+        String postingEmail = "searchPostTest4@email.com";
+        String postingPassword = "12345678";
+
+        registerAccount(postingNickname,postingEmail,postingPassword);
+
+        authenticateEmail(postingEmail);
+
+        Account account = accountRepository.findByEmail(postingEmail);
+
+        for(int i=0;i<7;i++){
+            String content=null;
+            if(i==1||i==2||i==4){
+                content = "search hello post test"+i;
+            }else{
+                content = "search post test"+i;
+            }
+
+            Post post= Post.builder()
+                    .account(account)
+                    .content(content)
+                    .postFile(null)
+                    .build();
+
+            postRepository.save(post);
+        }
+
+        String nickname = "searchPostTest5";
+        String email = "searchPostTest5@email.com";
+        String password = "12345678";
+
+        registerAccount(nickname,email,password);
+
+        authenticateEmail(email);
+
+        Object jwt = getJWTToken(email,password);
+
+        String keyword = "hello";
+        mockMvc.perform(get("/post/search/"+keyword).header("X-AUTH-TOKEN",jwt))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$",hasSize(3)));
+    }
+
 
     private void registerAccount(String nickname, String email, String password) {
         SignUpForm signUpForm = new SignUpForm();

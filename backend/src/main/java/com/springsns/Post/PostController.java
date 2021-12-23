@@ -11,6 +11,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -159,6 +160,23 @@ public class PostController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
 
+    }
+
+    @GetMapping("/post/search/{keyword}")
+    public ResponseEntity<Resource> searchPostByKeyword(@PathVariable String keyword,Principal principal){
+        System.out.println("GET /post/search/{keyword}");
+
+        String email = principal.getName();
+
+        Account account = accountRepository.findByEmail(email);
+
+        if(account == null || !account.isEmailVerified()){
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<PostResponseDto> postResponseDtoList = postService.searchPosts(keyword,email);
+
+        return new ResponseEntity(postResponseDtoList, HttpStatus.OK);
     }
 
 }

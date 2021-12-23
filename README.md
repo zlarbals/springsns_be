@@ -2,7 +2,7 @@
 
 ## 이메일 인증이 필요한 경우(이메일 인증, JWT 모두 필요한 경우)
 
-- 게시글 등록
+- 게시글 등록, 게시글 검색
 - 댓글 등록
 
 <br></br>
@@ -46,6 +46,7 @@
 |      게시글 페이징(slice) 가져오기      |     GET     |            /post            |
 | 특정 유저가 작성한 게시글 전체 가져오기 |     GET     |  /post/account/{nickname}   |
 |     게시글에 포함된 이미지 가져오기     |     GET     | /post/image/{imageName:.\*} |
+|               게시글 검색               |     GET     |   /post/search/{keyword}    |
 
 <br></br>
 
