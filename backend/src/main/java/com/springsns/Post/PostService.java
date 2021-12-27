@@ -28,6 +28,8 @@ public class PostService {
     private final PostRepository postRepository;
     private final AccountRepository accountRepository;
     private final LikeRepository likeRepository;
+
+    //사진 저장할 경로 필요에 맞게 변경해서 사용할 것.
     private final Path fileStorageLocation = Paths.get("/Users/KYUMIN/uploads").toAbsolutePath().normalize();
 
     @Transactional(readOnly = true)
@@ -67,7 +69,6 @@ public class PostService {
     public PostFile processPostFile(MultipartFile file) throws IOException {
 
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
-
 
         Path targetLocation = this.fileStorageLocation.resolve(originalFileName);
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);

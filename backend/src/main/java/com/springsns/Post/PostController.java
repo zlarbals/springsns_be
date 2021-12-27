@@ -1,6 +1,7 @@
 package com.springsns.Post;
 
 import com.springsns.account.AccountRepository;
+import com.springsns.comment.CommentRepository;
 import com.springsns.domain.Account;
 import com.springsns.domain.Post;
 import com.springsns.like.LikeRepository;
@@ -23,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,6 +34,7 @@ public class PostController {
     private final PostRepository postRepository;
     private final PostService postService;
     private final LikeRepository likeRepository;
+    private final CommentRepository commentRepository;
 
     //@Controller로 선언된 bean 객체에서는 메서드 인자로 Principal 객체에 직접 접근할 수 있는 추가적인 옵션이 있다.
     //현재 인증된 사용자의 정보를 Principal로 직접 접근할 수 있다.
@@ -177,6 +180,40 @@ public class PostController {
         List<PostResponseDto> postResponseDtoList = postService.searchPosts(keyword,email);
 
         return new ResponseEntity(postResponseDtoList, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/post/{postId}")
+    public ResponseEntity<Resource> deletePost(@PathVariable long postId,Principal principal){
+        System.out.println("DELETE /post/{postId}");
+
+        String email = principal.getName();
+
+        //이메일 인증 확인
+        Account account = accountRepository.findByEmail(email);
+        if(account==null || !account.isEmailVerified()){
+            return ResponseEntity.badRequest().build();
+        }
+
+        //게시글이 있는지 확인
+        Optional<Post> post = postRepository.findById(postId);
+        if(!post.isPresent()){
+            return ResponseEntity.badRequest().build();
+        }
+
+        //본인이 작성한 게시글인지 확인
+        if(!post.get().getAccount().equals(account)){
+            return ResponseEntity.badRequest().build();
+        }
+
+        //좋아요나 댓글 존재하는지 확인
+        if(likeRepository.existsByPost(post.get()) || commentRepository.existsByPost(post.get())){
+            return ResponseEntity.badRequest().build();
+        }
+
+        //삭제
+        postRepository.delete(post.get());
+
+        return new ResponseEntity(HttpStatus.OK);
     }
 
 }

@@ -3,6 +3,7 @@
 ## 이메일 인증이 필요한 경우(이메일 인증, JWT 모두 필요한 경우)
 
 - 게시글 등록, 게시글 검색
+- 게시글 삭제(게시글 주인만 가능, 좋아요/댓글 존재할 시 삭제할 수 없음)
 - 댓글 등록
 
 <br></br>
@@ -47,6 +48,7 @@
 | 특정 유저가 작성한 게시글 전체 가져오기 |     GET     |  /post/account/{nickname}   |
 |     게시글에 포함된 이미지 가져오기     |     GET     | /post/image/{imageName:.\*} |
 |               게시글 검색               |     GET     |   /post/search/{keyword}    |
+|               게시글 삭제               |   DELETE    |       /post/{postId}        |
 
 <br></br>
 
