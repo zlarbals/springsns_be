@@ -14,7 +14,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 //    @Query("SELECT p FROM Post p ORDER BY p.postedAt DESC ")
 //    List<Post> findAllPosts();
 
-    @Query(value = "select p from Post p")
+    @Query(value = "select p from Post p ORDER BY p.createdDate DESC")
     Slice<Post> findPostByPaging(Pageable pageable);
 
     //Like 사용.

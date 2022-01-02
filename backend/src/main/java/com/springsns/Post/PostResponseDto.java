@@ -27,7 +27,7 @@ public class PostResponseDto {
             this.isExistFile=false;
         }else{
             this.isExistFile=true;
-            this.fileName=post.getPostFile().getFileName();
+            this.fileName=post.getPostFile().getOriginalFileName();
         }
     }
 
@@ -40,7 +40,7 @@ public class PostResponseDto {
             this.isExistFile=false;
         }else{
             this.isExistFile=true;
-            this.fileName=post.getPostFile().getFileName();
+            this.fileName=post.getPostFile().getOriginalFileName();
         }
     }
 

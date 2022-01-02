@@ -9,7 +9,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -20,6 +19,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -29,8 +29,7 @@ public class PostService {
     private final AccountRepository accountRepository;
     private final LikeRepository likeRepository;
 
-    //사진 저장할 경로 필요에 맞게 변경해서 사용할 것.
-    private final Path fileStorageLocation = Paths.get("/Users/KYUMIN/uploads").toAbsolutePath().normalize();
+    private final Path fileStorageLocation = Paths.get("src/main/resources/images");
 
     @Transactional(readOnly = true)
     public List<PostResponseDto> getAllPosts(String email){
@@ -68,16 +67,21 @@ public class PostService {
 
     public PostFile processPostFile(MultipartFile file) throws IOException {
 
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String extension = getFileExtension(file);
+
+        //file name이 중복 가능하므로 uuid로 변경.
+        UUID newFileName = UUID.randomUUID();
+
+        String originalFileName = newFileName+"."+extension;
 
         Path targetLocation = this.fileStorageLocation.resolve(originalFileName);
+
+        //파일 저장.
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-        //PostFile 생성자 수정할 것.
-        PostFile postFile = new PostFile(originalFileName,originalFileName,"targetLocation");
+        PostFile postFile = new PostFile(originalFileName,newFileName.toString(),extension);
 
         return postFile;
-
     }
 
     public Resource loadFileAsResource(String fileName) throws MalformedURLException {
@@ -103,5 +107,14 @@ public class PostService {
         }
 
         return result;
+    }
+
+    private String getFileExtension(MultipartFile file) {
+
+        int index = file.getOriginalFilename().lastIndexOf(".");
+
+        String extension = file.getOriginalFilename().substring(index+1);
+
+        return extension;
     }
 }

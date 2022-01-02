@@ -16,6 +16,6 @@ public class PostFile {
 
     private String fileName;
 
-    private String filePath;
+    private String extension;
 
 }
