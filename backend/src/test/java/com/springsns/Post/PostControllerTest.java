@@ -19,6 +19,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.Cookie;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -87,9 +88,9 @@ class PostControllerTest {
         String password = "12345678";
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
-        mockMvc.perform(post("/post").header("X-AUTH-TOKEN",jwt).param("content","hello"))
+        mockMvc.perform(post("/post").cookie(new Cookie("jwt",jwt)).param("content","hello"))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
@@ -102,7 +103,7 @@ class PostControllerTest {
         String password = "12345678";
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         MockMultipartFile mockMultipartFile = makeMockImageFile(ORIGINAL_FILE_NAME, PATH);
 
@@ -110,7 +111,7 @@ class PostControllerTest {
                         multipart("/post")
                                 .file(mockMultipartFile)
                                 .param("content","hello")
-                                .header("X-AUTH-TOKEN",jwt)
+                                .cookie(new Cookie("jwt",jwt))
                                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
@@ -127,9 +128,9 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
-        mockMvc.perform(post("/post").header("X-AUTH-TOKEN",jwt).param("content","hello"))
+        mockMvc.perform(post("/post").cookie(new Cookie("jwt",jwt)).param("content","hello"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("existFile").value(false));
@@ -146,7 +147,7 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         MockMultipartFile mockMultipartFile = makeMockImageFile(ORIGINAL_FILE_NAME, PATH);
 
@@ -154,7 +155,7 @@ class PostControllerTest {
                 multipart("/post")
                         .file(mockMultipartFile)
                         .param("content","hello")
-                        .header("X-AUTH-TOKEN",jwt)
+                        .cookie(new Cookie("jwt",jwt))
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -172,7 +173,7 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         Account account = accountRepository.findByEmail(email);
 
@@ -194,7 +195,7 @@ class PostControllerTest {
 
         //가장 마지막 게시글 = post
         //가져온 첫 게시글이 post인지 확인
-        mockMvc.perform(get("/post").header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(get("/post").cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.[0].content").value(post.getContent()))
@@ -271,9 +272,9 @@ class PostControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
-        mockMvc.perform(get("/post/account/"+postingNickname).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(get("/post/account/"+postingNickname).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(jsonPath("$.[0].content").value(post.getContent()))
                 .andExpect(jsonPath("$",hasSize(7)));
@@ -381,10 +382,10 @@ class PostControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         String keyword = "hello";
-        mockMvc.perform(get("/post/search/"+keyword).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(get("/post/search/"+keyword).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
@@ -427,10 +428,10 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         String keyword = "hello";
-        mockMvc.perform(get("/post/search/"+keyword).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(get("/post/search/"+keyword).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$",hasSize(3)));
@@ -459,7 +460,7 @@ class PostControllerTest {
 
         Account account = accountRepository.findByEmail(postingEmail);
 
-        Object jwt = getJWTToken(postingEmail,postingPassword);
+        String jwt = getJWTToken(postingEmail,postingPassword);
 
         String content = "delete test";
         Post post = Post.builder()
@@ -470,7 +471,7 @@ class PostControllerTest {
 
         postRepository.save(post);
 
-        mockMvc.perform(delete("/post/928372").header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(delete("/post/928372").cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
@@ -505,9 +506,9 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
-        mockMvc.perform(delete("/post/"+post.getId()).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(delete("/post/"+post.getId()).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
@@ -525,7 +526,7 @@ class PostControllerTest {
 
         Account account = accountRepository.findByEmail(postingEmail);
 
-        Object jwt = getJWTToken(postingEmail,postingPassword);
+        String jwt = getJWTToken(postingEmail,postingPassword);
 
         String content = "delete test";
         Post post = Post.builder()
@@ -544,7 +545,7 @@ class PostControllerTest {
 
         likeService.addLike(email,post.getId());
 
-        mockMvc.perform(delete("/post/"+post.getId()).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(delete("/post/"+post.getId()).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
@@ -562,7 +563,7 @@ class PostControllerTest {
 
         Account account = accountRepository.findByEmail(postingEmail);
 
-        Object jwt = getJWTToken(postingEmail,postingPassword);
+        String jwt = getJWTToken(postingEmail,postingPassword);
 
         String content = "delete test";
         Post post = Post.builder()
@@ -592,7 +593,7 @@ class PostControllerTest {
 
         commentRepository.save(comment);
 
-        mockMvc.perform(delete("/post/"+post.getId()).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(delete("/post/"+post.getId()).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
@@ -610,7 +611,7 @@ class PostControllerTest {
 
         Account account = accountRepository.findByEmail(postingEmail);
 
-        Object jwt = getJWTToken(postingEmail,postingPassword);
+        String jwt = getJWTToken(postingEmail,postingPassword);
 
         String content = "delete test";
         Post post = Post.builder()
@@ -623,7 +624,7 @@ class PostControllerTest {
 
         assertTrue(postRepository.findById(post.getId()).isPresent());
 
-        mockMvc.perform(delete("/post/"+post.getId()).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(delete("/post/"+post.getId()).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -643,12 +644,12 @@ class PostControllerTest {
         accountService.completeSignUp(account);
     }
 
-    private Object getJWTToken(String email, String password) {
+    private String getJWTToken(String email, String password) {
         SignInForm signInForm = new SignInForm();
         signInForm.setEmail(email);
         signInForm.setPassword(password);
-        Map<String, Object> data = accountService.createJWTToken(signInForm);
-        return data.get("jwtToken");
+        String jwt = accountService.createJWTToken(signInForm);
+        return jwt;
     }
 
     private MockMultipartFile makeMockImageFile(String originalFileName, String path) throws IOException {

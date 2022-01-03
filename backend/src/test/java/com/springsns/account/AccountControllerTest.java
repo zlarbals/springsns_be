@@ -17,7 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
+import javax.servlet.http.Cookie;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.then;
@@ -269,7 +269,7 @@ class AccountControllerTest {
         String password = "12345678";
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         //request body
         JSONObject json = new JSONObject();
@@ -278,7 +278,7 @@ class AccountControllerTest {
 
         //jwt를 포함하고 있어야 함.
         //body에 패스워드 받고 알맞은 패스워드인지 확인
-        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN",jwt).content(json.toString()))
+        mockMvc.perform(patch("/account").cookie(new Cookie("jwt",jwt)).content(json.toString()))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
 
@@ -297,7 +297,7 @@ class AccountControllerTest {
         String password = "12345678";
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         //request body
         String passwordToChange = "87654321";
@@ -305,7 +305,7 @@ class AccountControllerTest {
         changePasswordForm.setPassword(passwordToChange);
         String body = objectMapper.writeValueAsString(changePasswordForm);
 
-        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN",jwt).contentType(MediaType.APPLICATION_JSON).content(body))
+        mockMvc.perform(patch("/account").cookie(new Cookie("jwt",jwt)).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -328,7 +328,7 @@ class AccountControllerTest {
         String passwordToChange = "87654321";
         json.put("password",passwordToChange);
 
-        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN","WrongJWTToken").content(json.toString()))
+        mockMvc.perform(patch("/account").cookie(new Cookie("jwt","WrongJWT")).content(json.toString()))
                 .andDo(print())
                 .andExpect(status().isForbidden());
 
@@ -345,9 +345,9 @@ class AccountControllerTest {
         String password = "12345678";
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
-        mockMvc.perform(delete("/account").header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(delete("/account").cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -363,7 +363,7 @@ class AccountControllerTest {
         String password = "12345678";
         registerAccount(nickname,email,password);
 
-        mockMvc.perform(delete("/account").header("X-AUTH-TOKEN","WrongJWTToken"))
+        mockMvc.perform(delete("/account").cookie(new Cookie("jwt","WrongJWT")))
                 .andDo(print())
                 .andExpect(status().isForbidden());
 
@@ -379,12 +379,12 @@ class AccountControllerTest {
         accountService.processNewAccount(signUpForm);
     }
 
-    private Object getJWTToken(String email, String password) {
+    private String getJWTToken(String email, String password) {
         SignInForm signInForm = new SignInForm();
         signInForm.setEmail(email);
         signInForm.setPassword(password);
-        Map<String, Object> data = accountService.createJWTToken(signInForm);
-        return data.get("jwtToken");
+        String jwt = accountService.createJWTToken(signInForm);
+        return jwt;
     }
 
 }

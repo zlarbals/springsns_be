@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.Cookie;
 import java.util.List;
 import java.util.Map;
 
@@ -105,9 +106,9 @@ class LikeControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
-        mockMvc.perform(post("/like/"+post.getId()).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(post("/like/"+post.getId()).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -144,7 +145,7 @@ class LikeControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         Account likedAccount = accountRepository.findByEmail(email);
 
@@ -152,7 +153,7 @@ class LikeControllerTest {
 
         assertTrue(likeRepository.existsByAccountAndPost(likedAccount,post));
 
-        mockMvc.perform(post("/like/"+post.getId()).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(post("/like/"+post.getId()).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -238,12 +239,12 @@ class LikeControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         likeService.addLike(email,posts.get(0).getId());
         likeService.addLike(email,posts.get(3).getId());
 
-        mockMvc.perform(get("/like").header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(get("/like").cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$",hasSize(2)));
@@ -262,12 +263,12 @@ class LikeControllerTest {
         accountService.completeSignUp(account);
     }
 
-    private Object getJWTToken(String email, String password) {
+    private String getJWTToken(String email, String password) {
         SignInForm signInForm = new SignInForm();
         signInForm.setEmail(email);
         signInForm.setPassword(password);
-        Map<String, Object> data = accountService.createJWTToken(signInForm);
-        return data.get("jwtToken");
+        String jwt = accountService.createJWTToken(signInForm);
+        return jwt;
     }
 
 }

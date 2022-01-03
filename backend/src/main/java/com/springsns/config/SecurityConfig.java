@@ -28,7 +28,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.httpBasic().disable() // security에서 기본으로 생성하는 login페이지 사용 안 함.
                 .csrf().disable() // csrf 사용 안 함.
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)  //JWT 인증 이므로 세션 사용
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
                 .antMatchers("/account/sign-in", "/account/check-email-token","/h2-console/*").permitAll()//모두 허용.

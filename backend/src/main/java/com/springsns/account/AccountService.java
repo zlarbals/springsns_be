@@ -81,18 +81,18 @@ public class AccountService {
     }
 
 
-    public Map<String, Object> createJWTToken(SignInForm signInForm) {
+    public String createJWTToken(SignInForm signInForm) {
         Account account = accountRepository.findByEmail(signInForm.getEmail());
-        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
+        //AccountResponseDto accountResponseDto = new AccountResponseDto(account);
 
         //jwt 토큰 생성
         String jwtToken = jwtTokenProvider.createToken(account.getUsername(),account.getRoles());
 
-        Map<String,Object> resultMap = new HashMap<>();
-        resultMap.put("jwtToken",jwtToken);
-        resultMap.put("user",accountResponseDto);
+//        Map<String,Object> resultMap = new HashMap<>();
+//        resultMap.put("jwtToken",jwtToken);
+//        resultMap.put("user",accountResponseDto);
 
-        return resultMap;
+        return jwtToken;
     }
 
     @Transactional

@@ -2,7 +2,9 @@ package com.springsns.account;
 
 import com.springsns.domain.Account;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
@@ -65,11 +67,19 @@ public class AccountController {
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
 
-        Map<String,Object> resultMap;
-        //jwt토큰과 user 정보를 맵에 리턴.
-        resultMap = accountService.createJWTToken(signInForm);
+        Account account = accountRepository.findByEmail(signInForm.getEmail());
 
-        return new ResponseEntity(resultMap, HttpStatus.OK);
+        Map<String,Object> resultMap = new HashMap<>();
+        //jwt토큰과 user 정보를 맵에 리턴.
+        String jwt = accountService.createJWTToken(signInForm);
+
+        resultMap.put("user",new AccountResponseDto(account));
+
+        ResponseCookie responseCookie = ResponseCookie.from("jwt",jwt)
+                        .httpOnly(true).build();
+
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE,responseCookie.toString())
+                .body(resultMap);
     }
 
     @GetMapping("/account/check-email-token")

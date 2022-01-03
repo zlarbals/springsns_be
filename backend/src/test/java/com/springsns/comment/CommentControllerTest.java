@@ -18,7 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
+import javax.servlet.http.Cookie;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -115,7 +115,7 @@ class CommentControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         String commentContent = "RegisterCommentContent";
         CommentForm commentForm = new CommentForm();
@@ -124,7 +124,7 @@ class CommentControllerTest {
         String body = objectMapper.writeValueAsString(commentForm);
 
         //게시글에 댓글 등록
-        mockMvc.perform(post("/comment/post/"+post.getId()).header("X-AUTH-TOKEN",jwt).contentType(MediaType.APPLICATION_JSON).content(body))
+        mockMvc.perform(post("/comment/post/"+post.getId()).cookie(new Cookie("jwt",jwt)).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
@@ -161,7 +161,7 @@ class CommentControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
         String commentContent = "RegisterCommentContent";
         CommentForm commentForm = new CommentForm();
@@ -170,7 +170,7 @@ class CommentControllerTest {
         String body = objectMapper.writeValueAsString(commentForm);
 
         //게시글에 댓글 등록
-        mockMvc.perform(post("/comment/post/"+post.getId()).header("X-AUTH-TOKEN",jwt).contentType(MediaType.APPLICATION_JSON).content(body))
+        mockMvc.perform(post("/comment/post/"+post.getId()).cookie(new Cookie("jwt",jwt)).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value(commentContent));
@@ -259,10 +259,10 @@ class CommentControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWTToken(email,password);
 
 
-        mockMvc.perform(get("/comment/post/"+post.getId()).header("X-AUTH-TOKEN",jwt))
+        mockMvc.perform(get("/comment/post/"+post.getId()).cookie(new Cookie("jwt",jwt)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.comments",hasSize(7)));
@@ -282,12 +282,12 @@ class CommentControllerTest {
         accountService.completeSignUp(account);
     }
 
-    private Object getJWTToken(String email, String password) {
+    private String getJWTToken(String email, String password) {
         SignInForm signInForm = new SignInForm();
         signInForm.setEmail(email);
         signInForm.setPassword(password);
-        Map<String, Object> data = accountService.createJWTToken(signInForm);
-        return data.get("jwtToken");
+        String jwt = accountService.createJWTToken(signInForm);
+        return jwt;
     }
 
 }

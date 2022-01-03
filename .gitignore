@@ -26,7 +26,7 @@ backend/.idea
 backend/*.iws
 backend/*.iml
 backend/*.ipr
-backend/files
+backend/src/main/resources/images
 
 HELP.md
 target/

@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
 import java.util.Date;
@@ -60,9 +61,22 @@ public class JwtTokenProvider {  // JWT토큰 생성 및 유효성 검증
         return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody().getSubject();
     }
 
-    //Request의 Header에서 token 값 가져오기 "X-AUTH_TOKEN" : "TOKEN값"
+    //Request의 쿠키에서 token 값 가져오기
     public String resolveToken(HttpServletRequest request) {
-        return request.getHeader("X-AUTH-TOKEN");
+        Cookie[] cookies = request.getCookies();
+
+        if(cookies==null){
+            return null;
+        }
+
+        for (Cookie cookie : cookies) {
+            String name = cookie.getName();
+            if(name.equals("jwt")){
+                return cookie.getValue();
+            }
+        }
+
+        return null;
     }
 
     //토큰의 유효성 + 만료인자 확인
