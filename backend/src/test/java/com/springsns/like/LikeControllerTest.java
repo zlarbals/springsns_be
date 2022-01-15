@@ -3,7 +3,6 @@ package com.springsns.like;
 import com.springsns.Post.PostRepository;
 import com.springsns.account.AccountRepository;
 import com.springsns.account.AccountService;
-import com.springsns.account.SignInForm;
 import com.springsns.account.SignUpForm;
 import com.springsns.domain.Account;
 import com.springsns.domain.Post;
@@ -16,7 +15,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
@@ -105,7 +103,7 @@ class LikeControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         mockMvc.perform(post("/like/"+post.getId()).header("X-AUTH-TOKEN",jwt))
                 .andDo(print())
@@ -144,7 +142,7 @@ class LikeControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         Account likedAccount = accountRepository.findByEmail(email);
 
@@ -238,7 +236,7 @@ class LikeControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         likeService.addLike(email,posts.get(0).getId());
         likeService.addLike(email,posts.get(3).getId());
@@ -250,24 +248,17 @@ class LikeControllerTest {
     }
 
     private void registerAccount(String nickname, String email, String password) {
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setNickname(nickname);
-        signUpForm.setEmail(email);
-        signUpForm.setPassword(password);
-        accountService.processNewAccount(signUpForm);
+        SignUpForm signUpForm = new SignUpForm(nickname,email,password);
+        accountService.processSignUpAccount(signUpForm);
     }
 
     private void authenticateEmail(String email) {
-        Account account = accountRepository.findByEmail(email);
-        accountService.completeSignUp(account);
+        accountService.verifyEmailToken(email);
     }
 
-    private Object getJWTToken(String email, String password) {
-        SignInForm signInForm = new SignInForm();
-        signInForm.setEmail(email);
-        signInForm.setPassword(password);
-        Map<String, Object> data = accountService.createJWTToken(signInForm);
-        return data.get("jwtToken");
+    private String getJWT(String email) {
+        String jwt = accountService.processSignInAccount(email);
+        return jwt;
     }
 
 }

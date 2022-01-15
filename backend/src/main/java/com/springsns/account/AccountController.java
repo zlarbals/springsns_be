@@ -2,131 +2,128 @@ package com.springsns.account;
 
 import com.springsns.domain.Account;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.Errors;
-import org.springframework.validation.ObjectError;
-import org.springframework.web.bind.WebDataBinder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class AccountController {
 
-    private final SignUpFormValidator signUpFormValidator;
-    private final SignInFormValidator signInFormValidator;
     private final AccountService accountService;
     private final AccountRepository accountRepository;
-
-    //signUpForm이라는 데이터를 받을 때 바인더를 설정할 수 있다.
-    @InitBinder("signUpForm")
-    public void initBinderForSignUp(WebDataBinder webDataBinder) {
-        webDataBinder.addValidators(signUpFormValidator);
-    }
-
-    @InitBinder("signInForm")
-    public void initBinderForSignIn(WebDataBinder webDataBinder){
-        webDataBinder.addValidators(signInFormValidator);
-    }
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/account")
-    public ResponseEntity signUpSubmit(@Valid @RequestBody SignUpForm signUpForm, Errors errors) {
-        System.out.println("post /account");
-        if (errors.hasErrors()) {
-            Map<String, Object> resultMap = new HashMap<>();
+    public ResponseEntity signUpSubmit(@Validated @RequestBody SignUpForm signUpForm, BindingResult bindingResult) {
+        log.info("AccountController.Post./account");
 
-            List<ObjectError> allErrors = errors.getAllErrors();
-            List<String> errorsMessage=new ArrayList<>();
-            for(ObjectError error:allErrors){
-                errorsMessage.add(error.getDefaultMessage());
-            }
+        signUpFormDuplicateCheck(bindingResult,signUpForm.getEmail(),signUpForm.getNickname());
 
-            resultMap.put("error",errorsMessage);
-            return ResponseEntity.badRequest().body(resultMap);
+        if(bindingResult.hasErrors()){
+            log.info("sign up submit error : {}",bindingResult);
+            return new ResponseEntity(bindingResult.getAllErrors(),HttpStatus.BAD_REQUEST);
         }
 
-        //new account 생성 저장, email check token 생성, email 보내기.
-        AccountResponseDto accountResponseDto = accountService.processNewAccount(signUpForm);
+        Account account = accountService.processSignUpAccount(signUpForm);
 
-        return ResponseEntity.ok().body(accountResponseDto);
+        HashMap<String,Object> resultMap = new HashMap<>();
+        resultMap.put("user",new AccountResponseDto(account));
+
+        return new ResponseEntity(resultMap,HttpStatus.OK);
     }
 
     @PostMapping("/account/sign-in")
-    public ResponseEntity signInSubmit(@Valid @RequestBody SignInForm signInForm, Errors errors) {
-        System.out.println("post /account/sign-in");
-        if(errors.hasErrors()){
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    public ResponseEntity signInSubmit(@Validated @RequestBody SignInForm signInForm, BindingResult bindingResult) {
+        log.info("AccountController.Post./sign-in");
+
+        signInFormMismatchCheck(bindingResult,signInForm.getEmail(),signInForm.getPassword());
+
+        if(bindingResult.hasErrors()){
+            log.info("sign in submit error : {}",bindingResult);
+            return new ResponseEntity(bindingResult.getAllErrors(),HttpStatus.BAD_REQUEST);
         }
 
-        Map<String,Object> resultMap;
-        //jwt토큰과 user 정보를 맵에 리턴.
-        resultMap = accountService.createJWTToken(signInForm);
+        String jwt = accountService.processSignInAccount(signInForm.getEmail());
+
+        HashMap<String,String> resultMap = new HashMap<>();
+        resultMap.put("jwt",jwt);
 
         return new ResponseEntity(resultMap, HttpStatus.OK);
     }
 
+    //쿼리 파라미터를 모델어트리뷰트에 담을 수 있다.
     @GetMapping("/account/check-email-token")
-    public ResponseEntity checkEmailToken(String token, String email) {
-        System.out.println("get /account/check-email-token");
+    public ResponseEntity checkEmailToken(@ModelAttribute EmailCheckForm emailCheckForm,BindingResult bindingResult) {
+        log.info("AccountController.Get./account/check-email-token");
+        String email = emailCheckForm.getEmail();
+        String token = emailCheckForm.getToken();
 
-        //Account account = accountRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
-        Account account = accountRepository.findByEmail(email);
+        emailTokenInvalidCheck(bindingResult,email,token);
 
-        //토큰 비교해서 다른 경우.
-        if (account == null || !account.isValidToken(token)) {
-            return ResponseEntity.badRequest().build();
+        if(bindingResult.hasErrors()){
+            log.info("check email token invalid");
+            return new ResponseEntity(bindingResult.getAllErrors(),HttpStatus.BAD_REQUEST);
         }
 
-        //emailVerified를 true로 만들고 등록날짜 설정.
-        AccountResponseDto accountResponseDto = accountService.completeSignUp(account);
+        Account account = accountService.verifyEmailToken(email);
 
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("user", accountResponseDto);
+        HashMap<String,Object> resultMap = new HashMap<>();
+        resultMap.put("user",new AccountResponseDto(account));
 
         return new ResponseEntity(resultMap, HttpStatus.OK);
     }
 
     @GetMapping("/account/resend-email-token")
-    public ResponseEntity sendEmail(Principal principal){
-        System.out.println("get /account/resend-email-token");
-        HashMap<String,Object> resultMap = new HashMap<>();
+    public ResponseEntity resendEmail(Principal principal){
+        log.info("AccountController.Get./account/resend-email-token");
         String email = principal.getName();
 
-        boolean isOk = accountService.resendEmail(email);
-
-        if(isOk){
-            return new ResponseEntity(HttpStatus.OK);
-        }else{
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        Map<String,Object> resultMap = new HashMap<>();
+        if(isAlreadyVerified(email)){
+            log.info("resend email token error : already verified");
+            resultMap.put("error","already verified");
+            return new ResponseEntity(resultMap,HttpStatus.BAD_REQUEST);
         }
+
+        Account account = accountService.resendEmail(email);
+
+        resultMap.put("user",new AccountResponseDto(account));
+
+        return new ResponseEntity(resultMap,HttpStatus.OK);
     }
 
-    //URI만 작성.
-    //TODO 비밀번호 변경 구현.  TDD로 도전 해볼 것.
     @PatchMapping("/account")
-    public ResponseEntity changePassword(@RequestBody ChangePasswordForm changePasswordForm,Principal principal){
-        System.out.println("patch /account");
+    public ResponseEntity changePassword(@Validated @RequestBody ChangePasswordForm changePasswordForm,BindingResult bindingResult,Principal principal){
+        log.info("AccountController.Patch./account");
+
+        if(bindingResult.hasErrors()){
+            log.info("change password error : {}",bindingResult);
+            return new ResponseEntity(bindingResult.getAllErrors(),HttpStatus.BAD_REQUEST);
+        }
+
         String email = principal.getName();
 
-        Account account = accountRepository.findByEmail(email);
+        Account account = accountService.changePassword(email,changePasswordForm.getPassword());
 
-        AccountResponseDto accountResponseDto = accountService.changePassword(changePasswordForm.getPassword(), email);
+        HashMap<String,Object> resultMap = new HashMap<>();
+        resultMap.put("user",new AccountResponseDto(account));
 
-        return new ResponseEntity(accountResponseDto,HttpStatus.OK);
+        return new ResponseEntity(resultMap,HttpStatus.OK);
     }
 
-    //URI만 작성.
-    //TODO 회원탈퇴 구현.   TDD로 도전 해볼 것.
     @DeleteMapping("/account")
     public ResponseEntity deleteAccount(Principal principal){
-        System.out.println("delete /account");
+        log.info("AccountController.Delete./account");
 
         String email = principal.getName();
         accountService.processDeleteAccount(email);
@@ -134,5 +131,39 @@ public class AccountController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    private void signUpFormDuplicateCheck(BindingResult bindingResult, String email, String nickname) {
+        //회원가입시 중복 이메일인지 확인
+        if (accountRepository.existsByEmail(email)) {
+            bindingResult.rejectValue("email","duplicate");
+        }
+
+        //회원가입시 중복 닉네임인지 확인
+        if (accountRepository.existsByNickname(nickname)) {
+            bindingResult.rejectValue("nickname","duplicate");
+        }
+    }
+
+    private void signInFormMismatchCheck(BindingResult bindingResult, String email, String password) {
+        //회원 탈퇴된 계정은 로그인 불가이므로 활성화된 계정에서만 찾음.
+        Account account = accountRepository.findActivateAccountByEmail(email);
+
+        if(account==null || !passwordEncoder.matches(password,account.getPassword())){
+            bindingResult.reject("mismatch");
+        }
+    }
+
+    private void emailTokenInvalidCheck(BindingResult bindingResult, String email, String token) {
+        Account account = accountRepository.findByEmail(email);
+
+        if(account==null || !account.isValidToken(token)){
+            bindingResult.reject("invalid");
+        }
+    }
+
+    private boolean isAlreadyVerified(String email) {
+        Account account = accountRepository.findByEmail(email);
+
+        return account.isEmailVerified();
+    }
 
 }

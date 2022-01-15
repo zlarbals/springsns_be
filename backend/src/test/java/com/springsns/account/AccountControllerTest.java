@@ -1,10 +1,11 @@
 package com.springsns.account;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springsns.domain.Account;
 import com.springsns.mail.EmailMessage;
 import com.springsns.mail.EmailService;
-import org.json.JSONObject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -15,12 +16,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -47,73 +48,146 @@ class AccountControllerTest {
     @MockBean
     EmailService emailService;
 
+    @AfterEach
+    public void clearRepository() {
+        accountRepository.deleteAll();
+    }
+
     @DisplayName("인증 메일 확인 - 계정 없음")
     @Test
     void checkEmailTokenWithNoAccount() throws Exception {
-        mockMvc.perform(get("/account/check-email-token")
-                .param("token", "sdfjslwfs")
-                .param("email", "email@email.com"))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+
+        //given
+        String token = "WrongToken";
+        String email = "email@email.com";
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/check-email-token")
+                        .param("token", token)
+                        .param("email", email))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().is4xxClientError());
     }
 
     @DisplayName("인증 메일 확인 - 올바른 계정, 올바른 토큰")
     @Transactional
     @Test
     void checkEmailTokenWithCorrectInput() throws Exception {
-        registerAccount("email1","email1@email.com","12345678");
+        //given
+        Account account = registerAccount();
 
-        Account account = accountRepository.findByEmail("email1@email.com");
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/check-email-token")
+                        .param("token", account.getEmailCheckToken())
+                        .param("email", account.getEmail()))
+                .andDo(print());
 
-        mockMvc.perform(get("/account/check-email-token")
-                .param("token", account.getEmailCheckToken())
-                .param("email", account.getEmail()))
-                .andDo(print())
+        //then
+        resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.emailVerified").value(true))
-                .andExpect(jsonPath("$.user.email").value("email1@email.com"));
+                .andExpect(jsonPath("$.user.email").value(account.getEmail()));
 
     }
 
     @DisplayName("인증 메일 확인 - 올바른 계정, 잘못된 토큰")
     @Transactional
     @Test
-    void checkEmailTokenWithCorrectAccountWrongToken() throws Exception{
-        registerAccount("email2","email2@email.com","12345678");
+    void checkEmailTokenWithCorrectAccountWrongToken() throws Exception {
 
-        Account account = accountRepository.findByEmail("email2@email.com");
+        //given
+        Account account = registerAccount();
 
-        mockMvc.perform(get("/account/check-email-token")
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/check-email-token")
                         .param("token", "WrongToken")
                         .param("email", account.getEmail()))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().is4xxClientError());
+    }
+
+    @DisplayName("인증 메일 재전송 - 잘못된 JWT")
+    @Test
+    void resendEmailTokenWithWrongJWT() throws Exception{
+
+        //given
+        registerAccount();
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("X-AUTH-TOKEN", "WrongToken"))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isForbidden());
+
+        //Account 등록 - 1번
+        then(emailService).should().sendEmail(ArgumentMatchers.any(EmailMessage.class));
+    }
+
+    @DisplayName("인증 메일 재전송 - 이미 인증된 사용자의 요청")
+    @Test
+    void resendEmailTokenWithAlreadyAuthenticatedUser() throws Exception{
+
+        //given
+        Account registeredAccount = registerAccount();
+        accountService.verifyEmailToken(registeredAccount.getEmail());
+
+        String registeredAccountJWT = getJWT(registeredAccount.getEmail());
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("X-AUTH-TOKEN", registeredAccountJWT))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isBadRequest());
+
+        //Account 등록 - 1번
+        then(emailService).should().sendEmail(ArgumentMatchers.any(EmailMessage.class));
+
+    }
+
+    @DisplayName("인증 메일 재전송 - 입력값 정상")
+    @Test
+    void resendEmailTokenWithCorrectInput() throws Exception{
+        //given
+        Account registeredAccount = registerAccount();
+
+        String registeredAccountJWT = getJWT(registeredAccount.getEmail());
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("X-AUTH-TOKEN", registeredAccountJWT))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isOk());
+        //Account 등록 - 1번 + 재전송 - 1번
+        then(emailService).should(times(2)).sendEmail(ArgumentMatchers.any(EmailMessage.class));
     }
 
     @DisplayName("회원 가입 처리 - 입력값 정상")
     @Test
     void signUpSubmitWithCorrectInput() throws Exception {
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup1@email.com");
-        signUpForm.setNickname("signup1");
-        signUpForm.setPassword("12345678");
 
-        String json = objectMapper.writeValueAsString(signUpForm);
+        //given
+        SignUpForm signUpForm = getSignUpForm();
+        String signUpFormToJson = objectMapper.writeValueAsString(signUpForm);
 
-        //.with(csrf())를 통해 테스트에서 csrf토큰을 설정해줄 수 있다.
-//        mockMvc.perform(post("/sign-up").contentType(MediaType.APPLICATION_JSON).content(json).with(csrf()))
-//                .andDo(print())
-//                .andExpect(status().is4xxClientError());
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(signUpFormToJson))
+                .andDo(print());
 
-        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
+        //then
+        resultActions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("email").value("signup1@email.com"))
-                .andExpect(jsonPath("emailVerified").value(false));
+                .andExpect(jsonPath("$.user.email").value(signUpForm.getEmail()))
+                .andExpect(jsonPath("$.user.emailVerified").value(false));
 
-        Account account = accountRepository.findByEmail("signup1@email.com");
+        Account account = accountRepository.findByEmail(signUpForm.getEmail());
         assertNotNull(account);
-        assertNotEquals(account.getPassword(), "dskljasdf32423");
         assertNotNull(account.getEmailCheckToken());
 
         then(emailService).should().sendEmail(ArgumentMatchers.any(EmailMessage.class));
@@ -121,270 +195,303 @@ class AccountControllerTest {
 
     @DisplayName("회원 가입 처리 - 이메일 중복")
     @Test
-    void signUpSubmitWithDuplicateEmail() throws Exception{
-        registerAccount("signup2","signup2@email.com","12345678");
+    void signUpSubmitWithDuplicateEmail() throws Exception {
 
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup2@email.com");
-        signUpForm.setNickname("signupduplicate");
-        signUpForm.setPassword("12345678");
+        //given
+        Account registeredAccount = registerAccount();
+        SignUpForm signUpForm = new SignUpForm("nickname", registeredAccount.getEmail(), "12345678");
+        String signUpFormToJson = objectMapper.writeValueAsString(signUpForm);
 
-        String json = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(signUpFormToJson))
+                .andDo(print());
 
-        Account account = accountRepository.findByEmail("signup2@email.com");
+        //then
+        resultActions.andExpect(status().is4xxClientError());
+
+        Account account = accountRepository.findByEmail(signUpForm.getEmail());
         assertNotNull(account);
-        assertEquals(account.getNickname(),"signup2");
+        assertEquals(account.getNickname(), registeredAccount.getNickname());
     }
 
     @DisplayName("회원 가입 처리 - 닉네임 중복")
     @Test
-    void signUpSubmitWithDuplicateNickname() throws Exception{
-        registerAccount("signup3","signup3@email.com","12345678");
+    void signUpSubmitWithDuplicateNickname() throws Exception {
 
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("nicknameduplicate@email.com");
-        signUpForm.setNickname("signup3");
-        signUpForm.setPassword("12345678");
+        //given
+        Account registeredAccount = registerAccount();
+        SignUpForm signUpForm = new SignUpForm(registeredAccount.getNickname(), "email@email.com", "12345678");
+        String signUpFormToJson = objectMapper.writeValueAsString(signUpForm);
 
-        String json = objectMapper.writeValueAsString(signUpForm);
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(signUpFormToJson))
+                .andDo(print());
 
-        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+        //then
+        resultActions.andExpect(status().is4xxClientError());
 
-        Account account = accountRepository.findByEmail("nicknameduplicate@email.com");
-        assertNull(account);
+        Account account = accountRepository.findByEmail(registeredAccount.getEmail());
+        assertNotNull(account);
+        assertEquals(account.getEmail(), registeredAccount.getEmail());
     }
 
     @DisplayName("회원 가입 처리 - 이메일 입력 오류")
     @Test
     void signUpSubmitWithWrongEmail() throws Exception {
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup4...");
-        signUpForm.setNickname("signup4");
-        signUpForm.setPassword("12345678");
 
-        String json = objectMapper.writeValueAsString(signUpForm);
+        //given
+        String email = "signup";
+        SignUpForm signUpForm = new SignUpForm("signup", email, "12345678");
+        String signUpFormToJson = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(signUpFormToJson))
+                .andDo(print());
 
-        Account account = accountRepository.findByEmail("signup4...");
+        //then
+        resultActions.andExpect(status().is4xxClientError());
+
+        Account account = accountRepository.findByEmail(email);
         assertNull(account);
     }
 
     @DisplayName("회원 가입 처리 - 닉네임 입력 오류")
     @Test
     void signUpSubmitWithWrongNickname() throws Exception {
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup5@email.com");
-        signUpForm.setNickname("signup5#");
-        signUpForm.setPassword("12345678");
 
-        String json = objectMapper.writeValueAsString(signUpForm);
+        //given
+        String email = "signup@email.com";
+        String nickname = "signup#";
+        SignUpForm signUpForm = new SignUpForm(nickname, email, "12345678");
+        String signUpFormToJson = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(signUpFormToJson))
+                .andDo(print());
 
-        Account account = accountRepository.findByEmail("signup5@email.com");
+        //then
+        resultActions.andExpect(status().is4xxClientError());
+
+        Account account = accountRepository.findByEmail(email);
         assertNull(account);
     }
 
     @DisplayName("회원 가입 처리 - 비밀번호 입력 오류")
     @Test
     void signUpSubmitWithWrongPassword() throws Exception {
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setEmail("signup6@email.com");
-        signUpForm.setNickname("signup6");
-        signUpForm.setPassword("11");
 
-        String json = objectMapper.writeValueAsString(signUpForm);
+        //given
+        String email = "signup@email.com";
+        String password = "11";
+        SignUpForm signUpForm = new SignUpForm("signup", email, password);
+        String signUpFormToJson = objectMapper.writeValueAsString(signUpForm);
 
-        mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account").contentType(MediaType.APPLICATION_JSON).content(signUpFormToJson))
+                .andDo(print());
 
-        Account account = accountRepository.findByEmail("signup6@email.com");
+        //then
+        resultActions.andExpect(status().is4xxClientError());
+
+        Account account = accountRepository.findByEmail(email);
         assertNull(account);
     }
 
     @DisplayName("로그인 처리 - 입력값 정상")
     @Test
-    void signInWithCorrectInput() throws Exception{
-        registerAccount("signin1","signin1@email.com","12345678");
+    void signInWithCorrectInput() throws Exception {
 
-        SignInForm signInForm = new SignInForm();
-        signInForm.setEmail("signin1@email.com");
-        signInForm.setPassword("12345678");
+        //given
+        Account registeredAccount = registerAccount();
+        //registeredAccount의 비밀번호는 암호화 되어 있어서 getter로 넘기면 안된다.
+        String signInFormToJson = getSignInFormToJson(registeredAccount.getEmail(), "12345678");
 
-        String json = objectMapper.writeValueAsString(signInForm);
-        mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
-                .andExpect(status().isOk());
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(signInFormToJson))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isOk());
+
     }
 
     @DisplayName("로그인 처리 - 잘못된 패스워드")
     @Test
-    void signInWithWrongPassword() throws Exception{
-        registerAccount("signin2","signin2@email.com","12345678");
+    void signInWithWrongPassword() throws Exception {
 
-        SignInForm signInForm = new SignInForm();
-        signInForm.setEmail("signin21@email.com");
-        signInForm.setPassword("87654321");
+        //given
+        Account registeredAccount = registerAccount();
+        //registeredAccount의 비밀번호는 암호화 되어 있어서 getter로 넘기면 안된다.
+        String signInFormToJson = getSignInFormToJson(registeredAccount.getEmail(), "WrongPassword");
 
-        String json = objectMapper.writeValueAsString(signInForm);
-        mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(signInFormToJson))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().is4xxClientError());
     }
 
     @DisplayName("로그인 처리 - 없는 계정")
     @Test
-    void signInWithWrongEmail() throws Exception{
-        SignInForm signInForm = new SignInForm();
-        signInForm.setEmail("signin3@email.com");
-        signInForm.setPassword("12345678");
+    void signInWithWrongEmail() throws Exception {
 
-        String json = objectMapper.writeValueAsString(signInForm);
-        mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+        //given
+        String email = "email@email.com";
+        String password = "12345678";
+        String signInFormToJson = getSignInFormToJson(email, password);
 
-        Account account = accountRepository.findByEmail("signin3@email.com");
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/account/sign-in").contentType(MediaType.APPLICATION_JSON).content(signInFormToJson))
+                .andDo(print());
 
+        //then
+        resultActions.andExpect(status().is4xxClientError());
+
+        Account account = accountRepository.findByEmail(email);
         assertNull(account);
     }
 
     @DisplayName("패스워드 변경 - 잘못된 패스워드로 변경")
-    void changePasswordWithWrongPassword() throws Exception{
-        //계정 등록
-        String nickname = "changepassword1";
-        String email = "changepassword1@email.com";
-        String password = "12345678";
-        registerAccount(nickname,email,password);
+    @Test
+    void changePasswordWithWrongPassword() throws Exception {
 
-        Object jwt = getJWTToken(email,password);
+        //given
+        Account registeredAccount = registerAccount();
+        String registeredAccountJWT = getJWT(registeredAccount.getEmail());
 
-        //request body
-        JSONObject json = new JSONObject();
         String passwordToChange = "11";
-        json.put("password",passwordToChange);
+        String changePasswordFormToJson = getChangePasswordFormToJson(passwordToChange);
 
-        //jwt를 포함하고 있어야 함.
-        //body에 패스워드 받고 알맞은 패스워드인지 확인
-        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN",jwt).content(json.toString()))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
+        //when
+        ResultActions resultActions = mockMvc.perform(patch("/account").contentType(MediaType.APPLICATION_JSON).header("X-AUTH-TOKEN", registeredAccountJWT).content(changePasswordFormToJson))
+                .andDo(print());
 
-        Account account = accountRepository.findByEmail(email);
+        //then
+        resultActions.andExpect(status().is4xxClientError());
 
-        assertEquals(false,passwordEncoder.matches(account.getPassword(),passwordToChange));
+        Account account = accountRepository.findByEmail(registeredAccount.getEmail());
+        assertFalse(passwordEncoder.matches(passwordToChange, account.getPassword()));
 
     }
 
     @DisplayName("패스워드 변경 - 정상적인 패스워드로 변경")
     @Test
-    void changePasswordWithCorrectPassword() throws Exception{
-        //계정 등록
-        String nickname = "changepassword2";
-        String email = "changepassword2@email.com";
-        String password = "12345678";
-        registerAccount(nickname,email,password);
+    void changePasswordWithCorrectPassword() throws Exception {
 
-        Object jwt = getJWTToken(email,password);
+        //given
+        Account registeredAccount = registerAccount();
+        String registeredAccountJWT = getJWT(registeredAccount.getEmail());
 
-        //request body
         String passwordToChange = "87654321";
-        ChangePasswordForm changePasswordForm = new ChangePasswordForm();
-        changePasswordForm.setPassword(passwordToChange);
-        String body = objectMapper.writeValueAsString(changePasswordForm);
+        String changePasswordFormToJson = getChangePasswordFormToJson(passwordToChange);
 
-        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN",jwt).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andDo(print())
-                .andExpect(status().isOk());
+        //when
+        ResultActions resultActions = mockMvc.perform(patch("/account").header("X-AUTH-TOKEN", registeredAccountJWT).contentType(MediaType.APPLICATION_JSON).content(changePasswordFormToJson))
+                .andDo(print());
 
-        Account account = accountRepository.findByEmail(email);
+        //then
+        resultActions.andExpect(status().isOk());
 
+        Account account = accountRepository.findByEmail(registeredAccount.getEmail());
         assertTrue(passwordEncoder.matches(passwordToChange, account.getPassword()));
     }
 
-    @DisplayName("패스워드 변경 - 잘못된 JWT 토큰")
+    @DisplayName("패스워드 변경 - 잘못된 JWT")
     @Test
-    void changePasswordWithWrongJWTToken() throws Exception{
-        //계정 등록
-        String nickname = "changepassword3";
-        String email = "changepassword3@email.com";
-        String password = "12345678";
-        registerAccount(nickname,email,password);
+    void changePasswordWithWrongJWT() throws Exception {
 
-        //request body
-        JSONObject json = new JSONObject();
+        //given
+        Account registeredAccount = registerAccount();
+
         String passwordToChange = "87654321";
-        json.put("password",passwordToChange);
+        String changePasswordFormToJson = getChangePasswordFormToJson(passwordToChange);
 
-        mockMvc.perform(patch("/account").header("X-AUTH-TOKEN","WrongJWTToken").content(json.toString()))
-                .andDo(print())
-                .andExpect(status().isForbidden());
+        //when
+        ResultActions resultActions = mockMvc.perform(patch("/account").header("X-AUTH-TOKEN", "WrongJWT").content(changePasswordFormToJson))
+                .andDo(print());
 
-        Account account = accountRepository.findByEmail(email);
+        //then
+        resultActions.andExpect(status().isForbidden());
 
+        Account account = accountRepository.findByEmail(registeredAccount.getEmail());
         assertFalse(passwordEncoder.matches(passwordToChange, account.getPassword()));
     }
 
-    @DisplayName("계정 탈퇴 - 정상 JWT 토큰")
+    @DisplayName("계정 탈퇴 - 정상 JWT")
     @Test
-    void deleteAccountWithCorrectJWTToken() throws Exception{
-        String nickname = "deleteAccount1";
-        String email = "deleteAccount1@email.com";
-        String password = "12345678";
-        registerAccount(nickname,email,password);
+    void deleteAccountWithCorrectJWT() throws Exception {
 
-        Object jwt = getJWTToken(email,password);
+        //given
+        Account registeredAccount = registerAccount();
+        String registeredAccountJWT = getJWT(registeredAccount.getEmail());
 
-        mockMvc.perform(delete("/account").header("X-AUTH-TOKEN",jwt))
-                .andDo(print())
-                .andExpect(status().isOk());
+        //when
+        ResultActions resultActions = mockMvc.perform(delete("/account").header("X-AUTH-TOKEN", registeredAccountJWT))
+                .andDo(print());
 
-        assertFalse(accountRepository.findByEmail(email).isActivate());
-        assertNull(accountRepository.findActivateAccountByEmail(email));
+        //then
+        resultActions.andExpect(status().isOk());
+
+        assertFalse(accountRepository.findByEmail(registeredAccount.getEmail()).isActivate());
+        assertNull(accountRepository.findActivateAccountByEmail(registeredAccount.getEmail()));
+        //Account 등록 - 1번 + 계정 탈퇴 - 1번
+        then(emailService).should(times(2)).sendEmail(ArgumentMatchers.any(EmailMessage.class));
     }
 
-    @DisplayName("계정 탈퇴 - 잘못된 JWT 토큰")
+    @DisplayName("계정 탈퇴 - 잘못된 JWT")
     @Test
-    void deleteAccountWithWrongJWTToken() throws Exception{
-        String nickname = "deleteAccount2";
-        String email = "deleteAccount2@email.com";
+    void deleteAccountWithWrongJWT() throws Exception {
+
+        //given
+        Account registeredAccount = registerAccount();
+
+        //when
+        ResultActions resultActions = mockMvc.perform(delete("/account").header("X-AUTH-TOKEN", "WrongJWT"))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isForbidden());
+
+        assertTrue(accountRepository.findByEmail(registeredAccount.getEmail()).isActivate());
+        assertNotNull(accountRepository.findActivateAccountByEmail(registeredAccount.getEmail()));
+    }
+
+    private Account registerAccount() {
+        String email = "register@email.com";
+        String nickname = "register";
         String password = "12345678";
-        registerAccount(nickname,email,password);
+        SignUpForm signUpForm = new SignUpForm(nickname, email, password);
 
-        mockMvc.perform(delete("/account").header("X-AUTH-TOKEN","WrongJWTToken"))
-                .andDo(print())
-                .andExpect(status().isForbidden());
-
-        assertTrue(accountRepository.findByEmail(email).isActivate());
-        assertNotNull(accountRepository.findActivateAccountByEmail(email));
+        Account account = accountService.processSignUpAccount(signUpForm);
+        return account;
     }
 
-    private void registerAccount(String nickname, String email, String password) {
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setNickname(nickname);
-        signUpForm.setEmail(email);
-        signUpForm.setPassword(password);
-        accountService.processNewAccount(signUpForm);
+    private SignUpForm getSignUpForm() {
+        String email = "signup@email.com";
+        String nickname = "signup";
+        String password = "12345678";
+        SignUpForm signUpForm = new SignUpForm(nickname, email, password);
+
+        return signUpForm;
     }
 
-    private Object getJWTToken(String email, String password) {
-        SignInForm signInForm = new SignInForm();
-        signInForm.setEmail(email);
-        signInForm.setPassword(password);
-        Map<String, Object> data = accountService.createJWTToken(signInForm);
-        return data.get("jwtToken");
+    private String getSignInFormToJson(String email, String password) throws JsonProcessingException {
+        SignInForm signInForm = new SignInForm(email, password);
+
+        return objectMapper.writeValueAsString(signInForm);
+    }
+
+    private String getChangePasswordFormToJson(String changePassword) throws JsonProcessingException {
+        ChangePasswordForm changePasswordForm = new ChangePasswordForm(changePassword);
+
+        return objectMapper.writeValueAsString(changePasswordForm);
+    }
+
+    private String getJWT(String email) {
+        String jwt = accountService.processSignInAccount(email);
+        return jwt;
     }
 
 }

@@ -2,7 +2,6 @@ package com.springsns.Post;
 
 import com.springsns.account.AccountRepository;
 import com.springsns.account.AccountService;
-import com.springsns.account.SignInForm;
 import com.springsns.account.SignUpForm;
 import com.springsns.comment.CommentRepository;
 import com.springsns.domain.Account;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Map;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -87,7 +85,7 @@ class PostControllerTest {
         String password = "12345678";
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         mockMvc.perform(post("/post").header("X-AUTH-TOKEN",jwt).param("content","hello"))
                 .andDo(print())
@@ -102,7 +100,7 @@ class PostControllerTest {
         String password = "12345678";
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         MockMultipartFile mockMultipartFile = makeMockImageFile(ORIGINAL_FILE_NAME, PATH);
 
@@ -127,7 +125,7 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         mockMvc.perform(post("/post").header("X-AUTH-TOKEN",jwt).param("content","hello"))
                 .andDo(print())
@@ -146,7 +144,7 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         MockMultipartFile mockMultipartFile = makeMockImageFile(ORIGINAL_FILE_NAME, PATH);
 
@@ -172,7 +170,7 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         Account account = accountRepository.findByEmail(email);
 
@@ -271,7 +269,7 @@ class PostControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         mockMvc.perform(get("/post/account/"+postingNickname).header("X-AUTH-TOKEN",jwt))
                 .andDo(print())
@@ -381,7 +379,7 @@ class PostControllerTest {
 
         registerAccount(nickname,email,password);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         String keyword = "hello";
         mockMvc.perform(get("/post/search/"+keyword).header("X-AUTH-TOKEN",jwt))
@@ -427,7 +425,7 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         String keyword = "hello";
         mockMvc.perform(get("/post/search/"+keyword).header("X-AUTH-TOKEN",jwt))
@@ -459,7 +457,7 @@ class PostControllerTest {
 
         Account account = accountRepository.findByEmail(postingEmail);
 
-        Object jwt = getJWTToken(postingEmail,postingPassword);
+        String jwt = getJWT(postingEmail);
 
         String content = "delete test";
         Post post = Post.builder()
@@ -505,7 +503,7 @@ class PostControllerTest {
 
         authenticateEmail(email);
 
-        Object jwt = getJWTToken(email,password);
+        String jwt = getJWT(email);
 
         mockMvc.perform(delete("/post/"+post.getId()).header("X-AUTH-TOKEN",jwt))
                 .andDo(print())
@@ -525,7 +523,7 @@ class PostControllerTest {
 
         Account account = accountRepository.findByEmail(postingEmail);
 
-        Object jwt = getJWTToken(postingEmail,postingPassword);
+        String jwt = getJWT(postingEmail);
 
         String content = "delete test";
         Post post = Post.builder()
@@ -562,7 +560,7 @@ class PostControllerTest {
 
         Account account = accountRepository.findByEmail(postingEmail);
 
-        Object jwt = getJWTToken(postingEmail,postingPassword);
+        String jwt = getJWT(postingEmail);
 
         String content = "delete test";
         Post post = Post.builder()
@@ -610,7 +608,7 @@ class PostControllerTest {
 
         Account account = accountRepository.findByEmail(postingEmail);
 
-        Object jwt = getJWTToken(postingEmail,postingPassword);
+        String jwt = getJWT(postingEmail);
 
         String content = "delete test";
         Post post = Post.builder()
@@ -631,24 +629,17 @@ class PostControllerTest {
     }
 
     private void registerAccount(String nickname, String email, String password) {
-        SignUpForm signUpForm = new SignUpForm();
-        signUpForm.setNickname(nickname);
-        signUpForm.setEmail(email);
-        signUpForm.setPassword(password);
-        accountService.processNewAccount(signUpForm);
+        SignUpForm signUpForm = new SignUpForm(nickname,email,password);
+        accountService.processSignUpAccount(signUpForm);
     }
 
     private void authenticateEmail(String email) {
-        Account account = accountRepository.findByEmail(email);
-        accountService.completeSignUp(account);
+        accountService.verifyEmailToken(email);
     }
 
-    private Object getJWTToken(String email, String password) {
-        SignInForm signInForm = new SignInForm();
-        signInForm.setEmail(email);
-        signInForm.setPassword(password);
-        Map<String, Object> data = accountService.createJWTToken(signInForm);
-        return data.get("jwtToken");
+    private String getJWT(String email) {
+        String jwt = accountService.processSignInAccount(email);
+        return jwt;
     }
 
     private MockMultipartFile makeMockImageFile(String originalFileName, String path) throws IOException {

@@ -6,7 +6,6 @@ import com.springsns.mail.EmailMessage;
 import com.springsns.mail.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,8 +15,6 @@ import org.thymeleaf.context.Context;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -34,17 +31,24 @@ public class AccountService {
     //@transactional을 붙여서 범위안에 넣어놔야 해당 객체는 persist상태가 유지된다.
     //persist상태의 객체는 transaction이 종료될 때 상태를 db에 싱크한다.
     @Transactional
-    public AccountResponseDto processNewAccount(SignUpForm signUpForm) {
-        //signUpForm으로 newAccount 생성하고 저장.
-        Account newAccount = saveNewAccount(signUpForm);
+    public Account processSignUpAccount(SignUpForm signUpForm) {
+        //signUpForm으로 Account 생성하고 저장.
+        Account account = saveNewAccount(signUpForm);
         //email check token 생성.
-        newAccount.generateEmailCheckToken();//토큰 값 생성. uuid 사용해서 랜덤하게 생성하자.
+        account.generateEmailCheckToken();//토큰 값 생성. uuid 사용해서 랜덤하게 생성하자.
         //확인 email 보내기.
-        sendSignUpConfirmEmail(newAccount);
+        sendSignUpConfirmEmail(account);
 
-        AccountResponseDto accountResponseDto = new AccountResponseDto(newAccount);
+        return account;
+    }
 
-        return accountResponseDto;
+    public String processSignInAccount(String email){
+        Account account = accountRepository.findByEmail(email);
+
+        //jwt 생성
+        String jwt = createJWT(account);
+
+        return jwt;
     }
 
     @Transactional
@@ -59,49 +63,33 @@ public class AccountService {
         sendDeleteConfirmEmail(email);
     }
 
-    public boolean resendEmail(String email){
+    public Account resendEmail(String email){
         Account account = accountRepository.findByEmail(email);
 
-        if(account.isEmailVerified()){
-            return false;
-        }
-
+        //이메일 전송
         sendSignUpConfirmEmail(account);
-        return true;
+
+        return account;
     }
 
     @Transactional
-    public AccountResponseDto completeSignUp(Account account) {
+    public Account verifyEmailToken(String email) {
+
+        Account account = accountRepository.findByEmail(email);
+
         account.setEmailVerified(true);
         account.setEmailVerifiedDate(LocalDateTime.now());
 
-        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
-
-        return accountResponseDto;
-    }
-
-
-    public Map<String, Object> createJWTToken(SignInForm signInForm) {
-        Account account = accountRepository.findByEmail(signInForm.getEmail());
-        AccountResponseDto accountResponseDto = new AccountResponseDto(account);
-
-        //jwt 토큰 생성
-        String jwtToken = jwtTokenProvider.createToken(account.getUsername(),account.getRoles());
-
-        Map<String,Object> resultMap = new HashMap<>();
-        resultMap.put("jwtToken",jwtToken);
-        resultMap.put("user",accountResponseDto);
-
-        return resultMap;
+        return account;
     }
 
     @Transactional
-    public AccountResponseDto changePassword(String password, String email) {
+    public Account changePassword(String email, String password) {
         Account account = accountRepository.findByEmail(email);
 
         account.setPassword(passwordEncoder.encode(password));
 
-        return new AccountResponseDto(account);
+        return account;
     }
 
     //회원 가입 처리
@@ -123,17 +111,24 @@ public class AccountService {
         //하지만 save메서드를 벗어나면 transaction범위를 벗어났으므로 deteched상태가 된다.
     }
 
-    private void sendSignUpConfirmEmail(Account newAccount) {
-        Context context = new Context(); // 모델이라고 생각하면 된다.
-        context.setVariable("link","/account/check-email-token?token=" + newAccount.getEmailCheckToken() + "&email=" + newAccount.getEmail());
-        context.setVariable("nickname",newAccount.getNickname());
+    private String createJWT(Account account) {
+        //jwt 토큰 생성
+        String jwt = jwtTokenProvider.createToken(account.getUsername(),account.getRoles());
+
+        return jwt;
+    }
+
+    private void sendSignUpConfirmEmail(Account account) {
+        Context context = new Context();
+        context.setVariable("link","/account/check-email-token?token=" + account.getEmailCheckToken() + "&email=" + account.getEmail());
+        context.setVariable("nickname",account.getNickname());
         context.setVariable("linkName","이메일 인증하기");
         context.setVariable("message","Spring SNS 서비스를 사용하려면 링크를 클릭하세요.");
         context.setVariable("host",appProperties.getHost());
         String message = templateEngine.process("mail/send-email-authentication-token", context);
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(newAccount.getEmail())
+                .to(account.getEmail())
                 .subject("SpringSNS, 회원 가입 인증")
                 .message(message)
                 .build();
