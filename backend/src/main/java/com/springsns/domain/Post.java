@@ -1,7 +1,7 @@
 package com.springsns.domain;
 
 
-import com.springsns.Post.PostFile;
+import com.springsns.post.PostImage;
 import lombok.*;
 
 import javax.persistence.*;
@@ -30,13 +30,13 @@ public class Post extends BaseTimeEntity{
     private String content;
 
     @Embedded
-    private PostFile postFile;
+    private PostImage postImage;
 
     @Builder
-    public Post(Account account,String content,PostFile postFile){
+    public Post(Account account, String content, PostImage postImage){
         this.account=account;
         this.content=content;
-        this.postFile=postFile;
+        this.postImage = postImage;
 
         //일반적으로 실행되면 연관관계가 모두 정상적으로 저장된다.
         //테스트 진행할 때 account를 생성하고 해당 account가 post를 작성하게 된다.

@@ -1,6 +1,6 @@
 package com.springsns.like;
 
-import com.springsns.Post.PostResponseDto;
+import com.springsns.post.PostResponseDto;
 import com.springsns.account.AccountRepository;
 import com.springsns.domain.Account;
 import com.springsns.domain.Like;

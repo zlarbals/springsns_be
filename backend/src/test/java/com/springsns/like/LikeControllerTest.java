@@ -1,6 +1,6 @@
 package com.springsns.like;
 
-import com.springsns.Post.PostRepository;
+import com.springsns.post.PostRepository;
 import com.springsns.account.AccountRepository;
 import com.springsns.account.AccountService;
 import com.springsns.account.SignUpForm;
@@ -65,7 +65,7 @@ class LikeControllerTest {
         Post post = Post.builder()
                 .account(account)
                 .content(content)
-                .postFile(null)
+                .postImage(null)
                 .build();
 
         postRepository.save(post);
@@ -92,7 +92,7 @@ class LikeControllerTest {
         Post post = Post.builder()
                 .account(account)
                 .content(content)
-                .postFile(null)
+                .postImage(null)
                 .build();
 
         postRepository.save(post);
@@ -131,7 +131,7 @@ class LikeControllerTest {
         Post post = Post.builder()
                 .account(account)
                 .content(content)
-                .postFile(null)
+                .postImage(null)
                 .build();
 
         postRepository.save(post);
@@ -177,7 +177,7 @@ class LikeControllerTest {
             post = Post.builder()
                     .account(account)
                     .content(content)
-                    .postFile(null)
+                    .postImage(null)
                     .build();
 
             postRepository.save(post);
@@ -221,7 +221,7 @@ class LikeControllerTest {
             post = Post.builder()
                     .account(account)
                     .content(content)
-                    .postFile(null)
+                    .postImage(null)
                     .build();
 
             postRepository.save(post);

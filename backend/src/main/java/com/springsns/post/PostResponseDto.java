@@ -1,4 +1,4 @@
-package com.springsns.Post;
+package com.springsns.post;
 
 import com.springsns.domain.Post;
 import lombok.Getter;
@@ -23,11 +23,11 @@ public class PostResponseDto {
         this.authorNickname=post.getAccount().getNickname();
         this.content=post.getContent();
         this.isLike=false;
-        if(post.getPostFile()==null){
+        if(post.getPostImage()==null){
             this.isExistFile=false;
         }else{
             this.isExistFile=true;
-            this.fileName=post.getPostFile().getOriginalFileName();
+            this.fileName=post.getPostImage().getOriginalFileName();
         }
     }
 
@@ -36,11 +36,11 @@ public class PostResponseDto {
         this.authorNickname=post.getAccount().getNickname();
         this.content=post.getContent();
         this.isLike=isLike;
-        if(post.getPostFile()==null){
+        if(post.getPostImage()==null){
             this.isExistFile=false;
         }else{
             this.isExistFile=true;
-            this.fileName=post.getPostFile().getOriginalFileName();
+            this.fileName=post.getPostImage().getOriginalFileName();
         }
     }
 

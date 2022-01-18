@@ -1,7 +1,7 @@
 package com.springsns.comment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.springsns.Post.PostRepository;
+import com.springsns.post.PostRepository;
 import com.springsns.account.AccountRepository;
 import com.springsns.account.AccountService;
 import com.springsns.account.SignUpForm;
@@ -65,7 +65,7 @@ class CommentControllerTest {
         Post post = Post.builder()
                 .account(account)
                 .content("registerCommentTest")
-                .postFile(null)
+                .postImage(null)
                 .build();
 
         postRepository.save(post);
@@ -100,7 +100,7 @@ class CommentControllerTest {
         Post post = Post.builder()
                 .account(account)
                 .content("registerCommentTest")
-                .postFile(null)
+                .postImage(null)
                 .build();
 
         postRepository.save(post);
@@ -144,7 +144,7 @@ class CommentControllerTest {
         Post post = Post.builder()
                 .account(account)
                 .content("registerCommentTest")
-                .postFile(null)
+                .postImage(null)
                 .build();
 
         postRepository.save(post);
@@ -191,7 +191,7 @@ class CommentControllerTest {
         Post post = Post.builder()
                 .account(account)
                 .content("GetCommentTest")
-                .postFile(null)
+                .postImage(null)
                 .build();
 
         postRepository.save(post);
@@ -232,7 +232,7 @@ class CommentControllerTest {
         Post post = Post.builder()
                 .account(account)
                 .content("GetCommentTest")
-                .postFile(null)
+                .postImage(null)
                 .build();
 
         postRepository.save(post);

@@ -1,4 +1,4 @@
-package com.springsns.Post;
+package com.springsns.post;
 
 import com.springsns.domain.Post;
 import org.springframework.data.domain.Pageable;
@@ -10,14 +10,13 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    //등록된 시간의 역순으로 정렬
-//    @Query("SELECT p FROM Post p ORDER BY p.postedAt DESC ")
-//    List<Post> findAllPosts();
-
     @Query(value = "select p from Post p ORDER BY p.createdDate DESC")
     Slice<Post> findPostByPaging(Pageable pageable);
 
     //Like 사용.
     List<Post> findPostsByContentContaining(String keyword);
+
+    @Query(value = "select p from Post p where p.account.nickname=:nickname ORDER BY p.createdDate DESC")
+    List<Post> findPostsByNickname(String nickname);
 
 }

@@ -1,4 +1,4 @@
-package com.springsns.Post;
+package com.springsns.post;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,7 +10,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class PostFile {
+public class PostImage {
 
     private String originalFileName;
 

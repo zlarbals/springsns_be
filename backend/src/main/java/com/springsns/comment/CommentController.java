@@ -1,6 +1,6 @@
 package com.springsns.comment;
 
-import com.springsns.Post.PostRepository;
+import com.springsns.post.PostRepository;
 import com.springsns.account.AccountRepository;
 import com.springsns.domain.Account;
 import com.springsns.domain.Comment;
