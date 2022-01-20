@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +39,7 @@ public class PostController {
     private final CommentRepository commentRepository;
 
     @PostMapping("/post")
-    public ResponseEntity registerPost(@ModelAttribute PostForm postForm, BindingResult bindingResult, Principal principal) throws IOException {
+    public ResponseEntity registerPost(@Validated @ModelAttribute PostForm postForm, BindingResult bindingResult, Principal principal) throws IOException {
         log.info("PostController.Post./post");
 
         String email = principal.getName();

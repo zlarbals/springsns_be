@@ -61,9 +61,8 @@ public class AccountController {
         return new ResponseEntity(resultMap, HttpStatus.OK);
     }
 
-    //쿼리 파라미터를 모델어트리뷰트에 담을 수 있다.
     @GetMapping("/account/check-email-token")
-    public ResponseEntity checkEmailToken(@ModelAttribute EmailCheckForm emailCheckForm,BindingResult bindingResult) {
+    public ResponseEntity checkEmailToken(@Validated @ModelAttribute EmailCheckForm emailCheckForm,BindingResult bindingResult) {
         log.info("AccountController.Get./account/check-email-token");
         String email = emailCheckForm.getEmail();
         String token = emailCheckForm.getToken();

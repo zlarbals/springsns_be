@@ -189,6 +189,28 @@ class PostControllerTest {
 
     }
 
+    @DisplayName("사진 없는 게시글 등록 - 잘못된 입력, 인증된 사용자")
+    @Test
+    void registerInvalidPostWithNoPictureWithAuthenticatedUser() throws Exception{
+
+        //given
+        Account account = registerAccount();
+        authenticateEmail(account.getEmail());
+        String jwt = getJWT(account.getEmail());
+
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/post")
+                        .header("X-AUTH-TOKEN", jwt)
+                        .param("content", ""))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().is4xxClientError());
+
+    }
+
+
+
     @DisplayName("게시글 가져오기(좋아요 표시) - 로그인한 사용자")
     @Test
     void getPostWithRegisteredUser() throws Exception{

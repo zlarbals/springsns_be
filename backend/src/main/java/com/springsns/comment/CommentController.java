@@ -4,61 +4,91 @@ import com.springsns.post.PostRepository;
 import com.springsns.account.AccountRepository;
 import com.springsns.domain.Account;
 import com.springsns.domain.Comment;
-import com.springsns.domain.Post;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class CommentController {
 
-    private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final CommentService commentService;
     private final AccountRepository accountRepository;
 
     @GetMapping("/comment/post/{postId}")
     public ResponseEntity getPostComment(@PathVariable Long postId){
+        log.info("CommentController.Get./comment/post/{postId}");
 
-        System.out.println("get /comment/post/{postId}");
+        if(!isPostExist(postId)){
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
 
-        List<CommentResponseDto> result=commentService.findAllComments(postId);
+        List<Comment> comments=commentService.findAllComments(postId);
+
+        List<CommentResponseDto> commentResponseDtoList = new ArrayList<>();
+        for(Comment comment:comments){
+            commentResponseDtoList.add(new CommentResponseDto(comment));
+        }
+
         Map<String,Object> resultMap=new HashMap<>();
-        resultMap.put("comments",result);
+        resultMap.put("comments",commentResponseDtoList);
 
         return ResponseEntity.ok().body(resultMap);
     }
 
     @PostMapping("/comment/post/{postId}")
-    public ResponseEntity createComment(@PathVariable Long postId, @RequestBody CommentForm commentForm, Principal principal){
-        System.out.println("post /comment/post/{postId}");
-        String email = principal.getName();
-        Account account = accountRepository.findByEmail(email);
+    public ResponseEntity createComment(@PathVariable Long postId, @Validated @RequestBody CommentForm commentForm, BindingResult bindingResult, Principal principal){
+        log.info("CommentController.Post./comment/post/{postId}");
 
-        if(account==null || !account.isEmailVerified()){
-            return ResponseEntity.badRequest().build();
+        if(bindingResult.hasErrors()){
+            log.info("register comment error : {}", bindingResult);
+            return new ResponseEntity(bindingResult.getAllErrors(), HttpStatus.BAD_REQUEST);
         }
 
-        Post post = postRepository.findById(postId).orElseThrow();
+        String email = principal.getName();
 
-        Comment comment = Comment.builder()
-                .account(account)
-                .post(post)
-                .content(commentForm.getContent())
-                .build();
+        if(!isRegisterCommentConditionValid(postId,email)){
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
 
-        commentRepository.save(comment);
+        Comment comment = commentService.registerComment(postId,email,commentForm);
 
         CommentResponseDto commentResponseDto = new CommentResponseDto(comment);
 
         return new ResponseEntity(commentResponseDto,HttpStatus.OK);
+    }
+
+    private boolean isRegisterCommentConditionValid(Long postId, String email) {
+
+        Account account = accountRepository.findByEmail(email);
+
+        //comment 등록할 post가 존재하는지 확인.
+        if(!isPostExist(postId)){
+            return false;
+        }
+
+        //이메일 인증 했는지 확인.
+        if(!account.isEmailVerified()){
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean isPostExist(Long postId) {
+        return postRepository.existsById(postId);
     }
 
 }
