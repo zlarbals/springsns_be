@@ -569,7 +569,7 @@ class PostControllerTest {
         int length = registeredPostList.size();
         int likePostCount = 2;
         for(int i=length-1;i>=length-likePostCount;i--){
-            likeService.addLike(account.getEmail(),registeredPostList.get(i).getId());
+            likeService.processAddAndDeleteLike(account.getEmail(),registeredPostList.get(i).getId());
         }
     }
 

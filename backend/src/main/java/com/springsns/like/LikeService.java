@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -17,11 +19,11 @@ public class LikeService {
     private final PostRepository postRepository;
     private final AccountRepository accountRepository;
 
-    public boolean addLike(String email, Long postId){
+    public void processAddAndDeleteLike(String email, Long postId){
 
         Account account = accountRepository.findByEmail(email);
 
-        Post post = postRepository.findById(postId).orElseThrow();
+        Post post = postRepository.findById(postId).get();
 
         Like like = likeRepository.findByAccountAndPost(account,post);
 
@@ -32,7 +34,12 @@ public class LikeService {
             //좋아요 취소하기 위해 누른 경우
             likeRepository.delete(like);
         }
+    }
 
-        return true;
+    public List<Like> findAllLikes(String email) {
+        Account account = accountRepository.findByEmail(email);
+
+        List<Like> likes = likeRepository.findAllByAccount(account);
+        return likes;
     }
 }

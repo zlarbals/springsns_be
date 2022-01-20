@@ -1,10 +1,10 @@
 package com.springsns.like;
 
+import com.springsns.post.PostRepository;
 import com.springsns.post.PostResponseDto;
-import com.springsns.account.AccountRepository;
-import com.springsns.domain.Account;
 import com.springsns.domain.Like;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,24 +16,24 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class LikeController {
 
     private final LikeService likeService;
-    private final AccountRepository accountRepository;
+    private final PostRepository postRepository;
 
     @PostMapping("/like/{postId}")
-    public ResponseEntity addLike(Principal principal, @PathVariable Long postId){
-        System.out.println("here is post like");
+    public ResponseEntity addAndDeleteLike(@PathVariable Long postId, Principal principal){
+        log.info("LikeController.Post./like/{postId}");
 
-        String email = principal.getName();
-
-        boolean result = likeService.addLike(email,postId);
-
-        if(!result){
+        if(!isPostExist(postId)){
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
+
+        String email = principal.getName();
+        likeService.processAddAndDeleteLike(email,postId);
 
         return new ResponseEntity(HttpStatus.OK);
     }
@@ -41,22 +41,27 @@ public class LikeController {
     //좋아요 한 게시글 가져오기.
     @GetMapping("/like")
     public ResponseEntity getMyLikePosts(Principal principal) {
-        System.out.println("get /like");
+        log.info("LikeController.Get./like");
 
         String email = principal.getName();
 
-        Account account = accountRepository.findByEmail(email);
+        List<Like> likes = likeService.findAllLikes(email);
+        List<PostResponseDto> likedPostsResponseDto = changeLikedPostToPostResponseDto(likes);
 
-        List<Like> likes = account.getLikes();
+        return new ResponseEntity(likedPostsResponseDto,HttpStatus.OK);
+    }
 
-        List<PostResponseDto> postList = new ArrayList<>();
+    private boolean isPostExist(Long postId) {
+        return postRepository.existsById(postId);
+    }
 
-        for (Like like : likes) {
-
-            postList.add(new PostResponseDto(like.getPost(), true));
+    private List<PostResponseDto> changeLikedPostToPostResponseDto(List<Like> likes){
+        List<PostResponseDto> postResponseDtoList = new ArrayList<>();
+        for(Like like:likes){
+            postResponseDtoList.add(new PostResponseDto(like.getPost(),true));
         }
 
-        return ResponseEntity.ok(postList);
+        return postResponseDtoList;
     }
 
 }
