@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,14 +25,14 @@ public class LikeController {
     private final PostRepository postRepository;
 
     @PostMapping("/like/{postId}")
-    public ResponseEntity addAndDeleteLike(@PathVariable Long postId, Principal principal){
+    public ResponseEntity addAndDeleteLike(@PathVariable Long postId, HttpServletRequest request){
         log.info("LikeController.Post./like/{postId}");
 
         if(!isPostExist(postId)){
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
         likeService.processAddAndDeleteLike(email,postId);
 
         return new ResponseEntity(HttpStatus.OK);
@@ -40,10 +40,10 @@ public class LikeController {
 
     //좋아요 한 게시글 가져오기.
     @GetMapping("/like")
-    public ResponseEntity getMyLikePosts(Principal principal) {
+    public ResponseEntity getMyLikePosts(HttpServletRequest request) {
         log.info("LikeController.Get./like");
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
         List<Like> likes = likeService.findAllLikes(email);
         List<PostResponseDto> likedPostsResponseDto = changeLikedPostToPostResponseDto(likes);

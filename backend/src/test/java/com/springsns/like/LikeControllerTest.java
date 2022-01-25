@@ -71,7 +71,7 @@ class LikeControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
     }
 
     @DisplayName("좋아요 등록 - 등록된 사용자")
@@ -88,7 +88,7 @@ class LikeControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/like/" + post.getId())
-                        .header("X-AUTH-TOKEN", likingAccountJWT))
+                        .header("Authorization", likingAccountJWT))
                 .andDo(print());
 
         //then
@@ -107,7 +107,7 @@ class LikeControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/like/" + 99999)
-                        .header("X-AUTH-TOKEN", likingAccountJWT))
+                        .header("Authorization", likingAccountJWT))
                 .andDo(print());
 
         //then
@@ -129,7 +129,7 @@ class LikeControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/like/" + post.getId())
-                        .header("X-AUTH-TOKEN", likingAccountJWT))
+                        .header("Authorization", likingAccountJWT))
                 .andDo(print());
 
         //then
@@ -149,7 +149,7 @@ class LikeControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
 
     }
 
@@ -168,7 +168,7 @@ class LikeControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(get("/like")
-                        .header("X-AUTH-TOKEN", likingAccountJWT))
+                        .header("Authorization", likingAccountJWT))
                 .andDo(print());
 
         //then
@@ -194,7 +194,7 @@ class LikeControllerTest {
 
     private String getJWT(String email) {
         String jwt = accountService.processSignInAccount(email);
-        return jwt;
+        return "Bearer "+jwt;
     }
 
     private Post registerPost(Account account) {

@@ -12,7 +12,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +49,7 @@ public class CommentController {
     }
 
     @PostMapping("/comment/post/{postId}")
-    public ResponseEntity createComment(@PathVariable Long postId, @Validated @RequestBody CommentForm commentForm, BindingResult bindingResult, Principal principal){
+    public ResponseEntity createComment(@PathVariable Long postId, @Validated @RequestBody CommentForm commentForm, BindingResult bindingResult, HttpServletRequest request){
         log.info("CommentController.Post./comment/post/{postId}");
 
         if(bindingResult.hasErrors()){
@@ -57,7 +57,7 @@ public class CommentController {
             return new ResponseEntity(bindingResult.getAllErrors(), HttpStatus.BAD_REQUEST);
         }
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
         if(!isRegisterCommentConditionValid(postId,email)){
             return new ResponseEntity(HttpStatus.BAD_REQUEST);

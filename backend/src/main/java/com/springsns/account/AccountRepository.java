@@ -14,8 +14,6 @@ public interface AccountRepository extends JpaRepository<Account,Long> {
 
     Account findByEmail(String email);
 
-    Account findByNickname(String nickname);
-
     @Query(value = "select a from Account a where a.email=:email and a.isActivate=true")
     Account findActivateAccountByEmail(@Param("email") String email);
 

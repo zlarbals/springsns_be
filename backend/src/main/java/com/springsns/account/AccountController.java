@@ -10,7 +10,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,7 +56,7 @@ public class AccountController {
         String jwt = accountService.processSignInAccount(signInForm.getEmail());
 
         HashMap<String,String> resultMap = new HashMap<>();
-        resultMap.put("jwt",jwt);
+        resultMap.put("jwt","Bearer "+jwt);
 
         return new ResponseEntity(resultMap, HttpStatus.OK);
     }
@@ -83,9 +83,9 @@ public class AccountController {
     }
 
     @GetMapping("/account/resend-email-token")
-    public ResponseEntity resendEmail(Principal principal){
+    public ResponseEntity resendEmail(HttpServletRequest request){
         log.info("AccountController.Get./account/resend-email-token");
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
         Map<String,Object> resultMap = new HashMap<>();
         if(isAlreadyVerified(email)){
@@ -102,7 +102,7 @@ public class AccountController {
     }
 
     @PatchMapping("/account")
-    public ResponseEntity changePassword(@Validated @RequestBody ChangePasswordForm changePasswordForm,BindingResult bindingResult,Principal principal){
+    public ResponseEntity changePassword(@Validated @RequestBody ChangePasswordForm changePasswordForm,BindingResult bindingResult,HttpServletRequest request){
         log.info("AccountController.Patch./account");
 
         if(bindingResult.hasErrors()){
@@ -110,7 +110,7 @@ public class AccountController {
             return new ResponseEntity(bindingResult.getAllErrors(),HttpStatus.BAD_REQUEST);
         }
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
         Account account = accountService.changePassword(email,changePasswordForm.getPassword());
 
@@ -121,10 +121,10 @@ public class AccountController {
     }
 
     @DeleteMapping("/account")
-    public ResponseEntity deleteAccount(Principal principal){
+    public ResponseEntity deleteAccount(HttpServletRequest request){
         log.info("AccountController.Delete./account");
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
         accountService.processDeleteAccount(email);
 
         return new ResponseEntity(HttpStatus.OK);

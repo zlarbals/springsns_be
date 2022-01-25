@@ -14,7 +14,6 @@ import org.thymeleaf.context.Context;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 
 @Slf4j
 @Service
@@ -102,7 +101,6 @@ public class AccountService {
                 .nickname(signUpForm.getNickname())
                 .password(passwordEncoder.encode(signUpForm.getPassword()))   //패스워드 encoding.
                 .isActivate(true)
-                .roles(Collections.singletonList("ROLE_USER")) //최초 가입시 USER로 설정
                 .build();
         //회원 저장
         return accountRepository.save(account);
@@ -113,7 +111,7 @@ public class AccountService {
 
     private String createJWT(Account account) {
         //jwt 토큰 생성
-        String jwt = jwtTokenProvider.createToken(account.getUsername(),account.getRoles());
+        String jwt = jwtTokenProvider.createToken(account.getEmail());
 
         return jwt;
     }

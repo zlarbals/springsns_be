@@ -79,7 +79,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
     }
 
     @DisplayName("사진 있는 게시글 등록 - 등록 안된 사용자")
@@ -97,7 +97,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
     }
 
     @DisplayName("사진 없는 게시글 등록 - 이메일 인증 안된 사용자")
@@ -110,7 +110,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/post")
-                        .header("X-AUTH-TOKEN", jwt)
+                        .header("Authorization", jwt)
                         .param("content", "hello"))
                 .andDo(print());
 
@@ -133,7 +133,7 @@ class PostControllerTest {
                         multipart("/post")
                                 .file(image)
                                 .param("content", "hello")
-                                .header("X-AUTH-TOKEN", jwt))
+                                .header("Authorization", jwt))
                 .andDo(print());
 
         //then
@@ -152,7 +152,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/post")
-                        .header("X-AUTH-TOKEN", jwt)
+                        .header("Authorization", jwt)
                         .param("content", "hello"))
                 .andDo(print());
 
@@ -179,7 +179,7 @@ class PostControllerTest {
                         multipart("/post")
                                 .file(image)
                                 .param("content", "hello")
-                                .header("X-AUTH-TOKEN", jwt))
+                                .header("Authorization", jwt))
                 .andDo(print());
 
         //then
@@ -200,7 +200,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/post")
-                        .header("X-AUTH-TOKEN", jwt)
+                        .header("Authorization", jwt)
                         .param("content", ""))
                 .andDo(print());
 
@@ -224,15 +224,14 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(get("/post")
-                        .header("X-AUTH-TOKEN", jwt))
+                        .header("Authorization", jwt))
                 .andDo(print());
 
         //then
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content",hasSize(5))) // slice 적용되었으므로 5개
-                .andExpect(jsonPath("$.content.[0].like").value(true))
-                .andExpect(jsonPath("$.content.[2].like").value(false));
+                .andExpect(jsonPath("$.content.[0].like").value(true));
 
     }
 
@@ -274,7 +273,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(get("/post/account/" + postingAccount.getNickname())
-                        .header("X-AUTH-TOKEN", requestingAccountJWT))
+                        .header("Authorization", requestingAccountJWT))
                 .andDo(print());
 
         //then
@@ -317,7 +316,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
     }
 
     @DisplayName("게시글 검색 - 등록된 사용자")
@@ -335,7 +334,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(get("/post/search/" + keyword)
-                        .header("X-AUTH-TOKEN", requestingAccountJWT))
+                        .header("Authorization", requestingAccountJWT))
                 .andDo(print());
 
         //then
@@ -355,7 +354,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(delete("/post/11111111")
-                        .header("X-AUTH-TOKEN", jwt))
+                        .header("Authorization", jwt))
                 .andDo(print());
 
         //then
@@ -376,7 +375,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(delete("/post/" + registeredPostList.get(0).getId())
-                        .header("X-AUTH-TOKEN", requestingAccountJWT))
+                        .header("Authorization", requestingAccountJWT))
                 .andDo(print());
 
         //then
@@ -395,7 +394,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(delete("/post/" + registeredPostList.get(registeredPostList.size() - 1).getId()) //like 마킹된 마지막 게시글
-                        .header("X-AUTH-TOKEN", jwt))
+                        .header("Authorization", jwt))
                 .andDo(print());
 
         //then
@@ -414,7 +413,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(delete("/post/" + registeredPostList.get(0).getId())
-                        .header("X-AUTH-TOKEN", jwt))
+                        .header("Authorization", jwt))
                 .andDo(print());
 
         //then
@@ -433,7 +432,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(delete("/post/" + deletePostId)
-                        .header("X-AUTH-TOKEN", jwt))
+                        .header("Authorization", jwt))
                 .andDo(print());
 
         //then
@@ -456,7 +455,7 @@ class PostControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(delete("/post/" + deletePostId)
-                        .header("X-AUTH-TOKEN", jwt))
+                        .header("Authorization", jwt))
                 .andDo(print());
 
         //then
@@ -532,7 +531,7 @@ class PostControllerTest {
 
     private String getJWT(String email) {
         String jwt = accountService.processSignInAccount(email);
-        return jwt;
+        return "Bearer "+jwt;
     }
 
     private MockMultipartFile makeMockImageFile(String originalFileName, String path) throws IOException {

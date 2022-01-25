@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -39,10 +38,10 @@ public class PostController {
     private final CommentRepository commentRepository;
 
     @PostMapping("/post")
-    public ResponseEntity registerPost(@Validated @ModelAttribute PostForm postForm, BindingResult bindingResult, Principal principal) throws IOException {
+    public ResponseEntity registerPost(@Validated @ModelAttribute PostForm postForm, BindingResult bindingResult, HttpServletRequest request) throws IOException {
         log.info("PostController.Post./post");
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
         //이메일 인증했는지 체크
         accountEmailVerifiedCheck(bindingResult, email);
@@ -58,21 +57,22 @@ public class PostController {
     }
 
     @GetMapping("/post")
-    public ResponseEntity getPostsByPageSlice(@PageableDefault(size = 5, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable, Principal principal) {
+    public ResponseEntity getPostsByPageSlice(@PageableDefault(size = 5, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable, HttpServletRequest request) {
         log.info("PostController.Get./post");
 
         Slice<Post> slicePost = postRepository.findPostByPaging(pageable);
-        //jwt가 없어도 접근할 수 있기 때문에 principal이 null일 수 있다.
-        Slice<PostResponseDto> slicePostsDto = changePostToPostResponseDtoByLike(slicePost, principal);
+        //jwt가 없어도 접근할 수 있기 때문에 email이 null일 수 있다.
+        String email = (String) request.getAttribute("SignInAccountEmail");
+        Slice<PostResponseDto> slicePostsDto = changePostToPostResponseDtoByLike(slicePost, email);
 
         return new ResponseEntity(slicePostsDto,HttpStatus.OK);
     }
 
     @GetMapping("/post/account/{nickname}")
-    public ResponseEntity getPostsByNickname(@PathVariable String nickname,Principal principal) {
+    public ResponseEntity getPostsByNickname(@PathVariable String nickname,HttpServletRequest request) {
         log.info("PostController.Get./post/account/{nickname}");
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
         List<Post> postsByNickname = postRepository.findPostsByNickname(nickname);
 
@@ -100,10 +100,10 @@ public class PostController {
     }
 
     @GetMapping("/post/search/{keyword}")
-    public ResponseEntity searchPostsByKeyword(@PathVariable String keyword, Principal principal) {
+    public ResponseEntity searchPostsByKeyword(@PathVariable String keyword, HttpServletRequest request) {
         log.info("PostController.Get./post/search/{keyword}");
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
         List<Post> postsByContentContaining = postRepository.findPostsByContentContaining(keyword);
 
@@ -113,10 +113,10 @@ public class PostController {
     }
 
     @DeleteMapping("/post/{postId}")
-    public ResponseEntity deletePost(@PathVariable long postId, Principal principal) {
+    public ResponseEntity deletePost(@PathVariable long postId, HttpServletRequest request) {
         log.info("PostController.Delete./post/{postId}");
 
-        String email = principal.getName();
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
         if(!isPostDeleteConditionValid(postId,email)){
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -137,12 +137,11 @@ public class PostController {
     }
 
 
-    private Slice<PostResponseDto> changePostToPostResponseDtoByLike(Slice<Post> slicePost, Principal principal) {
-        if (principal == null) {
+    private Slice<PostResponseDto> changePostToPostResponseDtoByLike(Slice<Post> slicePost, String email) {
+        if (email == null) {
             return slicePost.map(post -> new PostResponseDto(post, false));
         }
 
-        String email = principal.getName();
         Account account = accountRepository.findByEmail(email);
 
         Slice<PostResponseDto> result = slicePost.map(post -> {

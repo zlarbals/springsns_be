@@ -78,7 +78,7 @@ class CommentControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
     }
 
     @DisplayName("댓글 등록 - 이메일 인증 안된 사용자")
@@ -97,7 +97,7 @@ class CommentControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/comment/post/" + post.getId())
-                        .header("X-AUTH-TOKEN", commentingAccountJWT)
+                        .header("Authorization", commentingAccountJWT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(commentFormToJson))
                 .andDo(print());
@@ -123,7 +123,7 @@ class CommentControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/comment/post/" + post.getId())
-                        .header("X-AUTH-TOKEN", commentingAccountJWT)
+                        .header("Authorization", commentingAccountJWT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(commentFormToJson))
                 .andDo(print());
@@ -152,7 +152,7 @@ class CommentControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/comment/post/" + post.getId())
-                        .header("X-AUTH-TOKEN", commentingAccountJWT)
+                        .header("Authorization", commentingAccountJWT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(commentFormToJson))
                 .andDo(print());
@@ -175,7 +175,7 @@ class CommentControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(post("/comment/post/" + 99999)
-                        .header("X-AUTH-TOKEN", commentingAccountJWT)
+                        .header("Authorization", commentingAccountJWT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(commentFormToJson))
                 .andDo(print());
@@ -202,7 +202,7 @@ class CommentControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
 
     }
 
@@ -224,7 +224,7 @@ class CommentControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(get("/comment/post/" + post.getId())
-                        .header("X-AUTH-TOKEN", requestingAccountJWT))
+                        .header("Authorization", requestingAccountJWT))
                 .andDo(print());
 
         //then
@@ -244,7 +244,7 @@ class CommentControllerTest {
 
         //when
         ResultActions resultActions = mockMvc.perform(get("/comment/post/" + 99999)
-                        .header("X-AUTH-TOKEN", requestingAccountJWT))
+                        .header("Authorization", requestingAccountJWT))
                 .andDo(print());
 
         //then
@@ -281,7 +281,7 @@ class CommentControllerTest {
 
     private String getJWT(String email) {
         String jwt = accountService.processSignInAccount(email);
-        return jwt;
+        return "Bearer "+jwt;
     }
 
     private CommentForm getCommentForm() {

@@ -118,11 +118,11 @@ class AccountControllerTest {
         registerAccount();
 
         //when
-        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("X-AUTH-TOKEN", "WrongToken"))
+        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("Authorization", "WrongToken"))
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
 
         //Account 등록 - 1번
         then(emailService).should().sendEmail(ArgumentMatchers.any(EmailMessage.class));
@@ -139,7 +139,7 @@ class AccountControllerTest {
         String registeredAccountJWT = getJWT(registeredAccount.getEmail());
 
         //when
-        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("X-AUTH-TOKEN", registeredAccountJWT))
+        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("Authorization", registeredAccountJWT))
                 .andDo(print());
 
         //then
@@ -159,7 +159,7 @@ class AccountControllerTest {
         String registeredAccountJWT = getJWT(registeredAccount.getEmail());
 
         //when
-        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("X-AUTH-TOKEN", registeredAccountJWT))
+        ResultActions resultActions = mockMvc.perform(get("/account/resend-email-token").header("Authorization", registeredAccountJWT))
                 .andDo(print());
 
         //then
@@ -365,7 +365,7 @@ class AccountControllerTest {
         String changePasswordFormToJson = getChangePasswordFormToJson(passwordToChange);
 
         //when
-        ResultActions resultActions = mockMvc.perform(patch("/account").contentType(MediaType.APPLICATION_JSON).header("X-AUTH-TOKEN", registeredAccountJWT).content(changePasswordFormToJson))
+        ResultActions resultActions = mockMvc.perform(patch("/account").contentType(MediaType.APPLICATION_JSON).header("Authorization", registeredAccountJWT).content(changePasswordFormToJson))
                 .andDo(print());
 
         //then
@@ -388,7 +388,7 @@ class AccountControllerTest {
         String changePasswordFormToJson = getChangePasswordFormToJson(passwordToChange);
 
         //when
-        ResultActions resultActions = mockMvc.perform(patch("/account").header("X-AUTH-TOKEN", registeredAccountJWT).contentType(MediaType.APPLICATION_JSON).content(changePasswordFormToJson))
+        ResultActions resultActions = mockMvc.perform(patch("/account").header("Authorization", registeredAccountJWT).contentType(MediaType.APPLICATION_JSON).content(changePasswordFormToJson))
                 .andDo(print());
 
         //then
@@ -409,11 +409,11 @@ class AccountControllerTest {
         String changePasswordFormToJson = getChangePasswordFormToJson(passwordToChange);
 
         //when
-        ResultActions resultActions = mockMvc.perform(patch("/account").header("X-AUTH-TOKEN", "WrongJWT").content(changePasswordFormToJson))
+        ResultActions resultActions = mockMvc.perform(patch("/account").header("Authorization", "WrongJWT").content(changePasswordFormToJson))
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
 
         Account account = accountRepository.findByEmail(registeredAccount.getEmail());
         assertFalse(passwordEncoder.matches(passwordToChange, account.getPassword()));
@@ -428,7 +428,7 @@ class AccountControllerTest {
         String registeredAccountJWT = getJWT(registeredAccount.getEmail());
 
         //when
-        ResultActions resultActions = mockMvc.perform(delete("/account").header("X-AUTH-TOKEN", registeredAccountJWT))
+        ResultActions resultActions = mockMvc.perform(delete("/account").header("Authorization", registeredAccountJWT))
                 .andDo(print());
 
         //then
@@ -448,11 +448,11 @@ class AccountControllerTest {
         Account registeredAccount = registerAccount();
 
         //when
-        ResultActions resultActions = mockMvc.perform(delete("/account").header("X-AUTH-TOKEN", "WrongJWT"))
+        ResultActions resultActions = mockMvc.perform(delete("/account").header("Authorization", "WrongJWT"))
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isForbidden());
+        resultActions.andExpect(status().isUnauthorized());
 
         assertTrue(accountRepository.findByEmail(registeredAccount.getEmail()).isActivate());
         assertNotNull(accountRepository.findActivateAccountByEmail(registeredAccount.getEmail()));
@@ -491,7 +491,7 @@ class AccountControllerTest {
 
     private String getJWT(String email) {
         String jwt = accountService.processSignInAccount(email);
-        return jwt;
+        return "Bearer "+jwt;
     }
 
 }
