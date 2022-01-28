@@ -1,6 +1,6 @@
 package com.springsns.interceptor;
 
-import com.springsns.account.JwtTokenProvider;
+import com.springsns.util.jwt.JwtTokenProvider;
 import com.springsns.exception.AccountUnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

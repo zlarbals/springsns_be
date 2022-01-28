@@ -1,7 +1,6 @@
 package com.springsns.domain;
 
 
-import com.springsns.post.PostImage;
 import lombok.*;
 
 import javax.persistence.*;
