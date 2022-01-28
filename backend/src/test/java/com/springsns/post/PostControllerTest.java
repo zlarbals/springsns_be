@@ -115,7 +115,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isForbidden());
     }
 
     @DisplayName("사진 있는 게시글 등록 - 이메일 인증 안된 사용자")
@@ -137,7 +137,27 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isForbidden());
+    }
+
+    @DisplayName("사진 없는 게시글 등록 - 잘못된 입력, 인증된 사용자")
+    @Test
+    void registerInvalidPostWithNoPictureWithAuthenticatedUser() throws Exception{
+
+        //given
+        Account account = registerAccount();
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
+        String jwt = getJWT(account.getEmail());
+
+        //when
+        ResultActions resultActions = mockMvc.perform(post("/post")
+                        .header("Authorization", jwt)
+                        .param("content", ""))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isBadRequest());
+
     }
 
 
@@ -147,7 +167,7 @@ class PostControllerTest {
 
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         String jwt = getJWT(account.getEmail());
 
         //when
@@ -158,8 +178,8 @@ class PostControllerTest {
 
         //then
         resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("existFile").value(false));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.response.image").isEmpty());
 
     }
 
@@ -169,7 +189,7 @@ class PostControllerTest {
 
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         String jwt = getJWT(account.getEmail());
 
         MockMultipartFile image = makeMockImageFile(ORIGINAL_FILE_NAME, PATH);
@@ -184,32 +204,10 @@ class PostControllerTest {
 
         //then
         resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("existFile").value(true));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.response.image").isNotEmpty());
 
     }
-
-    @DisplayName("사진 없는 게시글 등록 - 잘못된 입력, 인증된 사용자")
-    @Test
-    void registerInvalidPostWithNoPictureWithAuthenticatedUser() throws Exception{
-
-        //given
-        Account account = registerAccount();
-        authenticateEmail(account.getEmail());
-        String jwt = getJWT(account.getEmail());
-
-        //when
-        ResultActions resultActions = mockMvc.perform(post("/post")
-                        .header("Authorization", jwt)
-                        .param("content", ""))
-                .andDo(print());
-
-        //then
-        resultActions.andExpect(status().is4xxClientError());
-
-    }
-
-
 
     @DisplayName("게시글 가져오기(좋아요 표시) - 로그인한 사용자")
     @Test
@@ -217,7 +215,7 @@ class PostControllerTest {
 
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         String jwt = getJWT(account.getEmail());
         List<Post> registeredPostList = registerPost(account);
         registerLikeToPost(registeredPostList,account);
@@ -230,8 +228,8 @@ class PostControllerTest {
         //then
         resultActions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content",hasSize(5))) // slice 적용되었으므로 5개
-                .andExpect(jsonPath("$.content.[0].like").value(true));
+                .andExpect(jsonPath("$.response.content",hasSize(5))) // slice 적용되었으므로 5개
+                .andExpect(jsonPath("$.response.content.[0].like").value(true));
 
     }
 
@@ -241,7 +239,7 @@ class PostControllerTest {
 
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         List<Post> registeredPostList = registerPost(account);
         registerLikeToPost(registeredPostList,account);
 
@@ -252,9 +250,9 @@ class PostControllerTest {
         //then
         resultActions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content",hasSize(5))) //slice 적용되었으므로 5개
-                .andExpect(jsonPath("$.content.[0].like").value(false))
-                .andExpect(jsonPath("$.content.[2].like").value(false));
+                .andExpect(jsonPath("$.response.content",hasSize(5))) //slice 적용되었으므로 5개
+                .andExpect(jsonPath("$.response.content.[0].like").value(false))
+                .andExpect(jsonPath("$.response.content.[2].like").value(false));
     }
 
     @DisplayName("특정 유저의 게시글 가져오기 - 등록된 사용자")
@@ -263,11 +261,11 @@ class PostControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         registerPost(postingAccount);
 
         Account requestingAccount = registerAccount();
-        authenticateEmail(requestingAccount.getEmail());
+        authenticateEmail(requestingAccount.getEmail(),requestingAccount.getEmailCheckToken());
         String requestingAccountJWT = getJWT(requestingAccount.getEmail());
         registerPost(requestingAccount);
 
@@ -278,9 +276,10 @@ class PostControllerTest {
 
         //then
         resultActions
-                .andExpect(jsonPath("$",hasSize(7)))
-                .andExpect(jsonPath("$.[0].authorNickname").value(postingAccount.getNickname()))
-                .andExpect(jsonPath("$.[4].authorNickname").value(postingAccount.getNickname()));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response",hasSize(7)))
+                .andExpect(jsonPath("$.response.[0].authorNickname").value(postingAccount.getNickname()))
+                .andExpect(jsonPath("$.response.[4].authorNickname").value(postingAccount.getNickname()));
 
     }
 
@@ -290,7 +289,7 @@ class PostControllerTest {
 
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         registerPost(account);
 
         //when
@@ -298,7 +297,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isUnauthorized());
     }
 
     @DisplayName("게시글 검색 - 등록 안된 사용자")
@@ -306,7 +305,7 @@ class PostControllerTest {
     void searchPostWithUnregisteredUser() throws Exception{
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         registerPost(account);
 
         String keyword = "like";
@@ -324,7 +323,7 @@ class PostControllerTest {
     void searchPostWithRegisteredUser() throws Exception{
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         registerPost(postingAccount);
 
         Account requestingAccount = registerAccount();
@@ -340,7 +339,7 @@ class PostControllerTest {
         //then
         resultActions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$",hasSize(2)));
+                .andExpect(jsonPath("$.response",hasSize(2)));
     }
 
     @DisplayName("게시글 삭제 - 인증된 사용자, 등록 안된 게시글 요청")
@@ -348,7 +347,7 @@ class PostControllerTest {
     void deleteUnregisteredPostWithAuthenticatedUser() throws Exception{
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         String jwt = getJWT(account.getEmail());
         registerPost(account);
 
@@ -358,7 +357,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isNotFound());
     }
 
     @DisplayName("게시글 삭제 - 인증된 사용자, 본인이 작성하지 않은 게시글 요청")
@@ -366,11 +365,11 @@ class PostControllerTest {
     void deleteNotOwnedPostWithAuthenticatedUser() throws Exception{
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         List<Post> registeredPostList = registerPost(postingAccount);
 
         Account requestingAccount = registerAccount();
-        authenticateEmail(requestingAccount.getEmail());
+        authenticateEmail(requestingAccount.getEmail(),requestingAccount.getEmailCheckToken());
         String requestingAccountJWT = getJWT(requestingAccount.getEmail());
 
         //when
@@ -379,7 +378,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @DisplayName("게시글 삭제 - 인증된 사용자, 본인이 작성하고 게시글에 좋아요 존재하는 경우")
@@ -387,7 +386,7 @@ class PostControllerTest {
     void deletePostWithLikeWithAuthenticatedUser() throws Exception{
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         String jwt = getJWT(account.getEmail());
         List<Post> registeredPostList = registerPost(account);
         registerLikeToPost(registeredPostList,account);
@@ -398,7 +397,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @DisplayName("게시글 삭제 - 인증된 사용자, 본인이 작성하고 게시글에 댓글 존재하는 경우")
@@ -406,7 +405,7 @@ class PostControllerTest {
     void deletePostWithCommentWithAuthenticatedUser() throws Exception{
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         String jwt = getJWT(account.getEmail());
         List<Post> registeredPostList = registerPost(account);
         registerCommentToPost(registeredPostList,account);
@@ -417,7 +416,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @DisplayName("게시글 삭제 - 인증된 사용자, 본인이 작성하고 게시글에 좋아요/댓글 없는 경우")
@@ -425,7 +424,7 @@ class PostControllerTest {
     void deletePostWithAuthenticatedUser() throws Exception{
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         String jwt = getJWT(account.getEmail());
         List<Post> registeredPostList = registerPost(account);
         Long deletePostId = registeredPostList.get(0).getId();
@@ -436,7 +435,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isOk());
+        resultActions.andExpect(status().isNoContent());
 
         assertFalse(postRepository.findById(deletePostId).isPresent());
     }
@@ -446,7 +445,7 @@ class PostControllerTest {
     void deleteImagePostWithAuthenticatedUser() throws Exception{
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
         String jwt = getJWT(account.getEmail());
 
         Post deletePost = registerPostWithImage(account);
@@ -459,7 +458,7 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isOk());
+        resultActions.andExpect(status().isNoContent());
 
         assertFalse(postRepository.findById(deletePostId).isPresent());
         File image = new File("./src/main/resources/images/"+imageName);
@@ -471,7 +470,7 @@ class PostControllerTest {
     void downloadImage() throws Exception{
         //given
         Account account = registerAccount();
-        authenticateEmail(account.getEmail());
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
 
         Post post = registerPostWithImage(account);
         String imageName = post.getPostImage().getOriginalFileName();
@@ -494,7 +493,46 @@ class PostControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isNotFound());
+    }
+
+    @DisplayName("좋아요 한 게시글 가져오기 - 등록 안된 사용자")
+    @Test
+    void getLikedPostWithUnregisteredUser() throws Exception{
+
+        //given
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/post/like"))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isUnauthorized());
+
+    }
+
+    @DisplayName("좋아요 한 게시글 가져오기 - 등록된 사용자")
+    @Test
+    void getLikedPostWithRegisteredUser() throws Exception{
+
+        //given
+        Account postingAccount = registerAccount();
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
+        List<Post> registeredPostList = registerPost(postingAccount);
+
+        Account likingAccount = registerAccount();
+        String likingAccountJWT = getJWT(likingAccount.getEmail());
+        registerLikeToPost(registeredPostList,likingAccount);
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/post/like")
+                        .header("Authorization", likingAccountJWT))
+                .andDo(print());
+
+        //then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response",hasSize(2)));
     }
 
     private Post registerPostWithImage(Account account) throws IOException {
@@ -525,13 +563,13 @@ class PostControllerTest {
         return accountService.processSignUpAccount(signUpForm);
     }
 
-    private void authenticateEmail(String email) {
-        accountService.verifyEmailToken(email);
+    private void authenticateEmail(String email,String token) {
+        accountService.verifyEmailToken(email,token);
     }
 
     private String getJWT(String email) {
-        String jwt = accountService.processSignInAccount(email);
-        return "Bearer "+jwt;
+        String jwt = accountService.processSignInAccount(email,"12345678");
+        return jwt;
     }
 
     private MockMultipartFile makeMockImageFile(String originalFileName, String path) throws IOException {

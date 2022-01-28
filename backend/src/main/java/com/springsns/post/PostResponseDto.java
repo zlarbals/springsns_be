@@ -14,34 +14,14 @@ public class PostResponseDto {
 
     private boolean isLike;
 
-    private boolean isExistFile;
-
-    private String fileName;
-
-    public PostResponseDto(Post post) {
-        this.id=post.getId();
-        this.authorNickname=post.getAccount().getNickname();
-        this.content=post.getContent();
-        this.isLike=false;
-        if(post.getPostImage()==null){
-            this.isExistFile=false;
-        }else{
-            this.isExistFile=true;
-            this.fileName=post.getPostImage().getOriginalFileName();
-        }
-    }
+    private PostImage image;
 
     public PostResponseDto(Post post, boolean isLike)  {
         this.id=post.getId();
         this.authorNickname=post.getAccount().getNickname();
         this.content=post.getContent();
         this.isLike=isLike;
-        if(post.getPostImage()==null){
-            this.isExistFile=false;
-        }else{
-            this.isExistFile=true;
-            this.fileName=post.getPostImage().getOriginalFileName();
-        }
+        this.image = post.getPostImage();
     }
 
 }

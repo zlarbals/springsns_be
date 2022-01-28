@@ -68,7 +68,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @DisplayName("인증 메일 확인 - 올바른 계정, 올바른 토큰")
@@ -87,8 +87,8 @@ class AccountControllerTest {
         //then
         resultActions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.emailVerified").value(true))
-                .andExpect(jsonPath("$.user.email").value(account.getEmail()));
+                .andExpect(jsonPath("$.response.emailVerified").value(true))
+                .andExpect(jsonPath("$.response.email").value(account.getEmail()));
 
     }
 
@@ -107,7 +107,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @DisplayName("인증 메일 재전송 - 잘못된 JWT")
@@ -134,7 +134,7 @@ class AccountControllerTest {
 
         //given
         Account registeredAccount = registerAccount();
-        accountService.verifyEmailToken(registeredAccount.getEmail());
+        accountService.verifyEmailToken(registeredAccount.getEmail(),registeredAccount.getEmailCheckToken());
 
         String registeredAccountJWT = getJWT(registeredAccount.getEmail());
 
@@ -163,7 +163,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isOk());
+        resultActions.andExpect(status().isNoContent());
         //Account 등록 - 1번 + 재전송 - 1번
         then(emailService).should(times(2)).sendEmail(ArgumentMatchers.any(EmailMessage.class));
     }
@@ -182,9 +182,9 @@ class AccountControllerTest {
 
         //then
         resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.email").value(signUpForm.getEmail()))
-                .andExpect(jsonPath("$.user.emailVerified").value(false));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.response.email").value(signUpForm.getEmail()))
+                .andExpect(jsonPath("$.response.emailVerified").value(false));
 
         Account account = accountRepository.findByEmail(signUpForm.getEmail());
         assertNotNull(account);
@@ -208,7 +208,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isConflict());
 
         Account account = accountRepository.findByEmail(signUpForm.getEmail());
         assertNotNull(account);
@@ -229,7 +229,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isConflict());
 
         Account account = accountRepository.findByEmail(registeredAccount.getEmail());
         assertNotNull(account);
@@ -250,7 +250,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
 
         Account account = accountRepository.findByEmail(email);
         assertNull(account);
@@ -271,7 +271,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
 
         Account account = accountRepository.findByEmail(email);
         assertNull(account);
@@ -292,7 +292,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
 
         Account account = accountRepository.findByEmail(email);
         assertNull(account);
@@ -330,7 +330,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @DisplayName("로그인 처리 - 없는 계정")
@@ -347,7 +347,7 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
 
         Account account = accountRepository.findByEmail(email);
         assertNull(account);
@@ -365,11 +365,14 @@ class AccountControllerTest {
         String changePasswordFormToJson = getChangePasswordFormToJson(passwordToChange);
 
         //when
-        ResultActions resultActions = mockMvc.perform(patch("/account").contentType(MediaType.APPLICATION_JSON).header("Authorization", registeredAccountJWT).content(changePasswordFormToJson))
+        ResultActions resultActions = mockMvc.perform(patch("/account")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", registeredAccountJWT)
+                        .content(changePasswordFormToJson))
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().is4xxClientError());
+        resultActions.andExpect(status().isBadRequest());
 
         Account account = accountRepository.findByEmail(registeredAccount.getEmail());
         assertFalse(passwordEncoder.matches(passwordToChange, account.getPassword()));
@@ -432,10 +435,10 @@ class AccountControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isOk());
+        resultActions.andExpect(status().isNoContent());
 
         assertFalse(accountRepository.findByEmail(registeredAccount.getEmail()).isActivate());
-        assertNull(accountRepository.findActivateAccountByEmail(registeredAccount.getEmail()));
+        assertTrue(accountRepository.findActivateAccountByEmail(registeredAccount.getEmail()).isEmpty());
         //Account 등록 - 1번 + 계정 탈퇴 - 1번
         then(emailService).should(times(2)).sendEmail(ArgumentMatchers.any(EmailMessage.class));
     }
@@ -490,8 +493,8 @@ class AccountControllerTest {
     }
 
     private String getJWT(String email) {
-        String jwt = accountService.processSignInAccount(email);
-        return "Bearer "+jwt;
+        String jwt = accountService.processSignInAccount(email,"12345678");
+        return jwt;
     }
 
 }

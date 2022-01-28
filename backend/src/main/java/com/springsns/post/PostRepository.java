@@ -11,7 +11,7 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query(value = "select p from Post p ORDER BY p.createdDate DESC")
-    Slice<Post> findPostByPaging(Pageable pageable);
+    Slice<Post> findPostsByPaging(Pageable pageable);
 
     //Like 사용.
     List<Post> findPostsByContentContaining(String keyword);

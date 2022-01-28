@@ -65,7 +65,7 @@ class CommentControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         CommentForm commentForm = getCommentForm();
@@ -87,7 +87,7 @@ class CommentControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         Account commentingAccount = registerAccount();
@@ -103,7 +103,7 @@ class CommentControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isBadRequest());
+        resultActions.andExpect(status().isForbidden());
     }
 
     @DisplayName("댓글 등록 - 인증된 사용자")
@@ -112,11 +112,11 @@ class CommentControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         Account commentingAccount = registerAccount();
-        authenticateEmail(commentingAccount.getEmail());
+        authenticateEmail(commentingAccount.getEmail(),commentingAccount.getEmailCheckToken());
         String commentingAccountJWT = getJWT(commentingAccount.getEmail());
         CommentForm commentForm = getCommentForm();
         String commentFormToJson = objectMapper.writeValueAsString(commentForm);
@@ -130,8 +130,8 @@ class CommentControllerTest {
 
         //then
         resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").value(commentForm.getContent()));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.response.content").value(commentForm.getContent()));
     }
 
     @DisplayName("댓글 등록 - 잘못된 입력, 인증된 사용자")
@@ -140,11 +140,11 @@ class CommentControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         Account commentingAccount = registerAccount();
-        authenticateEmail(commentingAccount.getEmail());
+        authenticateEmail(commentingAccount.getEmail(),commentingAccount.getEmailCheckToken());
         String commentingAccountJWT = getJWT(commentingAccount.getEmail());
 
         CommentForm commentForm = new CommentForm();
@@ -161,13 +161,13 @@ class CommentControllerTest {
         resultActions.andExpect(status().isBadRequest());
     }
 
-    @DisplayName("댓글 등록 - 잘못된 입력, 인증된 사용자")
+    @DisplayName("댓글 등록 - 존재하지 않는 게시글, 인증된 사용자")
     @Test
     void registerCommentInNullPostWithAuthenticatedUser() throws Exception{
 
         //given
         Account commentingAccount = registerAccount();
-        authenticateEmail(commentingAccount.getEmail());
+        authenticateEmail(commentingAccount.getEmail(),commentingAccount.getEmailCheckToken());
         String commentingAccountJWT = getJWT(commentingAccount.getEmail());
 
         CommentForm commentForm = getCommentForm();
@@ -181,7 +181,7 @@ class CommentControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isBadRequest());
+        resultActions.andExpect(status().isNotFound());
     }
 
     @DisplayName("댓글 가져오기 - 등록 안된 사용자")
@@ -190,11 +190,11 @@ class CommentControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         Account commentingAccount = registerAccount();
-        authenticateEmail(commentingAccount.getEmail());
+        authenticateEmail(commentingAccount.getEmail(),commentingAccount.getEmailCheckToken());
         registerCommentToPost(post,commentingAccount);
 
         //when
@@ -212,11 +212,11 @@ class CommentControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         Account commentingAccount = registerAccount();
-        authenticateEmail(commentingAccount.getEmail());
+        authenticateEmail(commentingAccount.getEmail(),commentingAccount.getEmailCheckToken());
         registerCommentToPost(post,commentingAccount);
 
         Account requestingAccount = registerAccount();
@@ -230,7 +230,7 @@ class CommentControllerTest {
         //then
         resultActions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.comments",hasSize(2)));
+                .andExpect(jsonPath("$.response",hasSize(2)));
 
     }
 
@@ -249,7 +249,7 @@ class CommentControllerTest {
 
         //then
         resultActions
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
 
     }
 
@@ -275,13 +275,13 @@ class CommentControllerTest {
         return postRepository.save(post);
     }
 
-    private void authenticateEmail(String email) {
-        accountService.verifyEmailToken(email);
+    private void authenticateEmail(String email,String token) {
+        accountService.verifyEmailToken(email,token);
     }
 
     private String getJWT(String email) {
-        String jwt = accountService.processSignInAccount(email);
-        return "Bearer "+jwt;
+        String jwt = accountService.processSignInAccount(email,"12345678");
+        return jwt;
     }
 
     private CommentForm getCommentForm() {

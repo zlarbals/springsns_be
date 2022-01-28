@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Transactional(readOnly = true)
 public interface AccountRepository extends JpaRepository<Account,Long> {
     boolean existsByEmail(String email);
@@ -15,6 +17,6 @@ public interface AccountRepository extends JpaRepository<Account,Long> {
     Account findByEmail(String email);
 
     @Query(value = "select a from Account a where a.email=:email and a.isActivate=true")
-    Account findActivateAccountByEmail(@Param("email") String email);
+    Optional<Account> findActivateAccountByEmail(@Param("email") String email);
 
 }

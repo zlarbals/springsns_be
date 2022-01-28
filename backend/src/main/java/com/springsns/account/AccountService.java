@@ -2,6 +2,7 @@ package com.springsns.account;
 
 import com.springsns.config.AppProperties;
 import com.springsns.domain.Account;
+import com.springsns.exception.AccountDuplicatedException;
 import com.springsns.mail.EmailMessage;
 import com.springsns.mail.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -31,28 +32,32 @@ public class AccountService {
     //persist상태의 객체는 transaction이 종료될 때 상태를 db에 싱크한다.
     @Transactional
     public Account processSignUpAccount(SignUpForm signUpForm) {
+
+        validateDuplicateAccount(signUpForm.getEmail(),signUpForm.getNickname());
+
         //signUpForm으로 Account 생성하고 저장.
         Account account = saveNewAccount(signUpForm);
         //email check token 생성.
-        account.generateEmailCheckToken();//토큰 값 생성. uuid 사용해서 랜덤하게 생성하자.
+        account.generateEmailCheckToken();
         //확인 email 보내기.
         sendSignUpConfirmEmail(account);
 
         return account;
     }
 
-    public String processSignInAccount(String email){
-        Account account = accountRepository.findByEmail(email);
+    public String processSignInAccount(String email,String password){
+        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("로그인에 실패했습니다"));
 
-        //jwt 생성
+        validateSignInMismatch(account.getPassword(),password);
+
         String jwt = createJWT(account);
 
-        return jwt;
+        return "Bearer "+jwt;
     }
 
     @Transactional
     public void processDeleteAccount(String email) {
-        Account account = accountRepository.findByEmail(email);
+        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
 
         //계정 닉네임 변경
         account.setNickname("LeftUser");
@@ -62,19 +67,27 @@ public class AccountService {
         sendDeleteConfirmEmail(email);
     }
 
-    public Account resendEmail(String email){
-        Account account = accountRepository.findByEmail(email);
+    public void resendEmail(String email){
+
+        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
+
+        //이미 인증했는지 확인
+        if(account.isEmailVerified()){
+            throw new IllegalStateException("이미 이메일 인증이 완료되었습니다.");
+        }
 
         //이메일 전송
         sendSignUpConfirmEmail(account);
-
-        return account;
     }
 
     @Transactional
-    public Account verifyEmailToken(String email) {
+    public Account verifyEmailToken(String email,String token) {
 
-        Account account = accountRepository.findByEmail(email);
+        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("토큰이 일치하지 않습니다."));
+
+        if(!account.isValidToken(token)){
+            throw new IllegalArgumentException("토큰이 일치하지 않습니다");
+        }
 
         account.setEmailVerified(true);
         account.setEmailVerifiedDate(LocalDateTime.now());
@@ -84,11 +97,21 @@ public class AccountService {
 
     @Transactional
     public Account changePassword(String email, String password) {
-        Account account = accountRepository.findByEmail(email);
+        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
 
         account.setPassword(passwordEncoder.encode(password));
 
         return account;
+    }
+
+    private void validateDuplicateAccount(String email, String nickname) {
+        if(accountRepository.existsByEmail(email)){
+            throw new AccountDuplicatedException("중복된 이메일 입니다.");
+        }
+
+        if(accountRepository.existsByNickname(nickname)){
+            throw new AccountDuplicatedException("중복된 닉네임 입니다.");
+        }
     }
 
     //회원 가입 처리
@@ -132,6 +155,12 @@ public class AccountService {
                 .build();
 
         emailService.sendEmail(emailMessage);
+    }
+
+    private void validateSignInMismatch(String encryptedPassword,String password) {
+        if(!passwordEncoder.matches(password,encryptedPassword)){
+            throw new IllegalArgumentException("로그인에 실패했습니다");
+        }
     }
 
     private void sendDeleteConfirmEmail(String email) {

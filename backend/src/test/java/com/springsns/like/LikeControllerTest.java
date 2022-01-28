@@ -16,12 +16,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -63,7 +60,7 @@ class LikeControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         //when
@@ -80,7 +77,7 @@ class LikeControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         Account likingAccount = registerAccount();
@@ -92,7 +89,7 @@ class LikeControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isOk());
+        resultActions.andExpect(status().isNoContent());
 
         assertTrue(likeRepository.existsByAccountAndPost(likingAccount,post));
     }
@@ -111,7 +108,7 @@ class LikeControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isBadRequest());
+        resultActions.andExpect(status().isNotFound());
     }
 
     @DisplayName("좋아요 삭제 - 등록된 사용자")
@@ -120,7 +117,7 @@ class LikeControllerTest {
 
         //given
         Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
+        authenticateEmail(postingAccount.getEmail(),postingAccount.getEmailCheckToken());
         Post post = registerPost(postingAccount);
 
         Account likingAccount = registerAccount();
@@ -133,48 +130,9 @@ class LikeControllerTest {
                 .andDo(print());
 
         //then
-        resultActions.andExpect(status().isOk());
+        resultActions.andExpect(status().isNoContent());
 
         assertFalse(likeRepository.existsByAccountAndPost(likingAccount,post));
-    }
-
-    @DisplayName("좋아요 한 게시글 가져오기 - 등록 안된 사용자")
-    @Test
-    void getLikedPostWithUnregisteredUser() throws Exception{
-
-        //given
-
-        //when
-        ResultActions resultActions = mockMvc.perform(get("/like"))
-                .andDo(print());
-
-        //then
-        resultActions.andExpect(status().isUnauthorized());
-
-    }
-
-    @DisplayName("좋아요 한 게시글 가져오기 - 등록된 사용자")
-    @Test
-    void getLikedPostWithRegisteredUser() throws Exception{
-
-        //given
-        Account postingAccount = registerAccount();
-        authenticateEmail(postingAccount.getEmail());
-        Post post = registerPost(postingAccount);
-
-        Account likingAccount = registerAccount();
-        String likingAccountJWT = getJWT(likingAccount.getEmail());
-        registerLikeToPost(post,likingAccount);
-
-        //when
-        ResultActions resultActions = mockMvc.perform(get("/like")
-                        .header("Authorization", likingAccountJWT))
-                .andDo(print());
-
-        //then
-        resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$",hasSize(1)));
     }
 
     private Account registerAccount() {
@@ -188,13 +146,13 @@ class LikeControllerTest {
         return accountService.processSignUpAccount(signUpForm);
     }
 
-    private void authenticateEmail(String email) {
-        accountService.verifyEmailToken(email);
+    private void authenticateEmail(String email,String token) {
+        accountService.verifyEmailToken(email,token);
     }
 
     private String getJWT(String email) {
-        String jwt = accountService.processSignInAccount(email);
-        return "Bearer "+jwt;
+        String jwt = accountService.processSignInAccount(email,"12345678");
+        return jwt;
     }
 
     private Post registerPost(Account account) {

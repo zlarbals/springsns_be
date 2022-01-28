@@ -1,8 +1,6 @@
 package com.springsns.comment;
 
-import com.springsns.post.PostRepository;
-import com.springsns.account.AccountRepository;
-import com.springsns.domain.Account;
+import com.springsns.advice.Result;
 import com.springsns.domain.Comment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,82 +11,47 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 public class CommentController {
 
-    private final PostRepository postRepository;
     private final CommentService commentService;
-    private final AccountRepository accountRepository;
 
     @GetMapping("/comment/post/{postId}")
-    public ResponseEntity getPostComment(@PathVariable Long postId){
+    public ResponseEntity<Result> getPostComment(@PathVariable Long postId,HttpServletRequest request){
         log.info("CommentController.Get./comment/post/{postId}");
 
-        if(!isPostExist(postId)){
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
-        }
+        String email = (String) request.getAttribute("SignInAccountEmail");
 
-        List<Comment> comments=commentService.findAllComments(postId);
+        //TODO 이메일 요청에서 받고 계정 존재하는지 확인해야함.
+        List<Comment> comments=commentService.findAllComments(postId,email);
 
-        List<CommentResponseDto> commentResponseDtoList = new ArrayList<>();
-        for(Comment comment:comments){
-            commentResponseDtoList.add(new CommentResponseDto(comment));
-        }
+        List<CommentResponseDto> commentResponseDtoList = comments.stream()
+                .map(comment -> new CommentResponseDto(comment))
+                .collect(Collectors.toList());
 
-        Map<String,Object> resultMap=new HashMap<>();
-        resultMap.put("comments",commentResponseDtoList);
-
-        return ResponseEntity.ok().body(resultMap);
+        return new ResponseEntity(new Result(HttpStatus.OK,commentResponseDtoList),HttpStatus.OK);
     }
 
     @PostMapping("/comment/post/{postId}")
-    public ResponseEntity createComment(@PathVariable Long postId, @Validated @RequestBody CommentForm commentForm, BindingResult bindingResult, HttpServletRequest request){
+    public ResponseEntity<Result> createComment(@PathVariable Long postId, @Validated @RequestBody CommentForm commentForm, BindingResult bindingResult, HttpServletRequest request){
         log.info("CommentController.Post./comment/post/{postId}");
 
         if(bindingResult.hasErrors()){
             log.info("register comment error : {}", bindingResult);
-            return new ResponseEntity(bindingResult.getAllErrors(), HttpStatus.BAD_REQUEST);
+            throw new IllegalArgumentException("잘못된 형식입니다.");
         }
 
         String email = (String) request.getAttribute("SignInAccountEmail");
-
-        if(!isRegisterCommentConditionValid(postId,email)){
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
-        }
-
-        Comment comment = commentService.registerComment(postId,email,commentForm);
+        Comment comment = commentService.registerComment(postId,email,commentForm.getContent());
 
         CommentResponseDto commentResponseDto = new CommentResponseDto(comment);
 
-        return new ResponseEntity(commentResponseDto,HttpStatus.OK);
-    }
-
-    private boolean isRegisterCommentConditionValid(Long postId, String email) {
-
-        Account account = accountRepository.findByEmail(email);
-
-        //comment 등록할 post가 존재하는지 확인.
-        if(!isPostExist(postId)){
-            return false;
-        }
-
-        //이메일 인증 했는지 확인.
-        if(!account.isEmailVerified()){
-            return false;
-        }
-
-        return true;
-    }
-
-    private boolean isPostExist(Long postId) {
-        return postRepository.existsById(postId);
+        return new ResponseEntity(new Result(HttpStatus.CREATED,commentResponseDto),HttpStatus.CREATED);
     }
 
 }
