@@ -8,11 +8,13 @@ import com.springsns.domain.Account;
 import com.springsns.domain.Like;
 import com.springsns.domain.Post;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Slf4j
 @RequiredArgsConstructor
+@Service
 public class LikeService {
     private final LikeRepository likeRepository;
     private final PostRepository postRepository;
@@ -30,9 +32,11 @@ public class LikeService {
         if(like==null){
             //좋아요 하기위해 누른 경우
             likeRepository.save(new Like(account,post));
+            log.info("add like : {}",like);
         }else{
             //좋아요 취소하기 위해 누른 경우
             likeRepository.delete(like);
+            log.info("delete like : {}",like);
         }
     }
 }
