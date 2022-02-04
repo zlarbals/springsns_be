@@ -1,3 +1,37 @@
+# 실행 가이드
+
+## 1. git clone
+
+```
+git clone https://github.com/zlarbals/SpringSNS.git
+```
+
+## 2. 디렉토리 이동
+
+```
+cd springsns/backend
+```
+
+## 3. 프로젝트 BUILD
+
+```
+./mvnw package
+```
+
+## 4. 디렉토리 이동
+
+```
+cd target
+```
+
+## 5. 프로젝트 실행
+
+```
+java -jar springsns-0.0.1-SNAPSHOT.jar
+```
+
+<br></br>
+
 # Policy
 
 ## 이메일 인증이 필요한 경우(이메일 인증, JWT 모두 필요한 경우)
@@ -28,27 +62,27 @@
 
 ## Account
 
-|        기능        | HTTP Method |             URI             |
-| :----------------: | :---------: | :-------------------------: |
-|     회원 가입      |    POST     |          /account           |
-|   비밀번호 변경    |    PATCH    |          /account           |
-|     회원 탈퇴      |   DELETE    |          /account           |
-|       로그인       |    POST     |      /account/sign-in       |
-|    이메일 인증     |     GET     | /account/check-email-token  |
-| 인증 이메일 재전송 |     GET     | /account/resend-email-token |
+|        기능        | HTTP Method |                           URI                            |
+| :----------------: | :---------: | :------------------------------------------------------: |
+|     회원 가입      |    POST     |                         /account                         |
+|   비밀번호 변경    |    PATCH    |                         /account                         |
+|     회원 탈퇴      |   DELETE    |                         /account                         |
+|       로그인       |    POST     |                     /account/sign-in                     |
+|    이메일 인증     |     GET     | /account/check-email-token?email={#email}&token={#token} |
+| 인증 이메일 재전송 |     GET     |               /account/resend-email-token                |
 
 <br></br>
 
 ## Post
 
-|                  기능                   | HTTP Method |             URI             |
-| :-------------------------------------: | :---------: | :-------------------------: |
-|               게시글 등록               |    POST     |            /post            |
-|      게시글 페이징(slice) 가져오기      |     GET     |            /post            |
-| 특정 유저가 작성한 게시글 전체 가져오기 |     GET     |  /post/account/{nickname}   |
-|     게시글에 포함된 이미지 가져오기     |     GET     | /post/image/{imageName:.\*} |
-|               게시글 검색               |     GET     |   /post/search/{keyword}    |
-|               게시글 삭제               |   DELETE    |       /post/{postId}        |
+|                  기능                   | HTTP Method |           URI            |
+| :-------------------------------------: | :---------: | :----------------------: |
+|               게시글 등록               |    POST     |          /post           |
+|      게시글 페이징(slice) 가져오기      |     GET     | /post?page={pageNumber}  |
+| 특정 유저가 작성한 게시글 전체 가져오기 |     GET     | /post/account/{nickname} |
+|     게시글에 포함된 이미지 가져오기     |     GET     | /post/image/{imageName}  |
+|               게시글 검색               |     GET     |  /post/search/{keyword}  |
+|               게시글 삭제               |   DELETE    |      /post/{postId}      |
 
 <br></br>
 
@@ -67,3 +101,9 @@
 | :----------------------: | :---------: | :------------: |
 |     좋아요 등록/삭제     |    POST     | /like/{postId} |
 | 좋아요한 게시글 가져오기 |     GET     |     /like      |
+
+<br></br>
+
+# ERD
+
+![jpg_1](./ETC/ERD.PNG)

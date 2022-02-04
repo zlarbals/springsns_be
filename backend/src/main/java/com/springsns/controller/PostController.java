@@ -74,9 +74,9 @@ public class PostController {
         return new ResponseEntity(new Result(HttpStatus.OK,postResponseDtoList),HttpStatus.OK);
     }
 
-    @GetMapping("/post/image/{imageName:.+}")
+    @GetMapping("/post/image/{imageName}")
     public ResponseEntity downloadImage(@PathVariable String imageName,HttpServletRequest request) throws IOException {
-        log.info("PostController.Get./post/image/{imageName:.+}");
+        log.info("PostController.Get./post/image/{imageName}");
 
         Resource resource = postService.getImageAsResource(imageName);
 

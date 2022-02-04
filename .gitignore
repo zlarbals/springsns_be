@@ -4,12 +4,13 @@ backend/.idea
 backend/*.iws
 backend/*.iml
 backend/*.ipr
-backend/files
 
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+ETC/*.mdj
 
 
