@@ -1,34 +1,112 @@
 # 실행 가이드
 
-## 1. git clone
+## [maven으로 직접 실행하는 경우]
+
+### 1. git clone
 
 ```
 git clone https://github.com/zlarbals/SpringSNS.git
 ```
 
-## 2. 디렉토리 이동
+### 2. 디렉토리 이동
 
 ```
 cd springsns/backend
 ```
 
-## 3. 프로젝트 BUILD
+### 3. 프로젝트 BUILD
 
 ```
-./mvnw package
+./mvnw clean package
 ```
 
-## 4. 디렉토리 이동
+### 4. 디렉토리 이동
 
 ```
 cd target
 ```
 
-## 5. 프로젝트 실행
+### 5. 프로젝트 실행
 
 ```
 java -jar springsns-0.0.1-SNAPSHOT.jar
 ```
+
+<br></br>
+
+## [docker 사용 하는 경우]
+
+### 1. git clone
+
+```
+git clone https://github.com/zlarbals/SpringSNS.git
+```
+
+### 2. 디렉토리 이동
+
+```
+cd springsns/backend
+```
+
+### 3. 프로젝트 BUILD
+
+```
+./mvnw clean package
+```
+
+### 4. docker image 생성
+
+```
+docker build -t spring-sns-image .
+```
+
+### 5. docker container 실행
+
+```
+docker run --name spring-sns -p 8080:8080 -d spring-sns-image
+```
+
+<br></br>
+
+## [주의사항]
+
+### 1. DB
+
+DB의 경우 InMemory DB인 h2를 사용하므로 따로 설정할 필요 없습니다.
+
+다른 DB로 변경할 경우 yml 설정 파일에서 변경 후 사용하면 됩니다.
+
+<!-- ### 2. 이메일 전송
+
+기본적으로 spring.profiles.active가 local로 설정되어 있으므로
+
+인증 이메일 전송 같은 경우 해당 내용이 로그에 남기 때문에
+
+위 실행가이드를 그대로 따라하면 됩니다.
+
+실제 이메일 전송을 원할 경우 네이버 smtp 설정을 진행한 후에
+
+application-prod.yml 파일의 naver id, password, secret key의 빈칸을 채우신 후에
+
+yml파일에 spring.profiles.active를 prod로 변경하거나
+
+다음과 같이 실행하면 됩니다.
+
+```
+java -Dspring.profiles.active=prod -jar springsns-0.0.1-SNAPSHOT.jar
+```
+
+도커로 실행할 경우
+
+Dockerfile의 ENTRYPOINT 부분을 다음과 같이 변경하고 위 실행가이드를 따라하면 됩니다.
+
+```
+ENTRYPOINT ["java","-jar","spring-sns.jar"] ->
+
+ENTRYPOINT ["java","-Dspring.profiles.active=prod","-jar","spring-sns.jar"]
+
+하지만 현재 docker로 실행할 경우 naver smtp에서 인증 오류가 발생하기 때문에 해결방법을 찾고 있습니다.
+``` -->
 
 <br></br>
 

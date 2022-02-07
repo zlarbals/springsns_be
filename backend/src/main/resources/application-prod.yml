@@ -1,0 +1,37 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:h2:mem:~/springsns
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  data:
+    web:
+      pageable:
+        default-page-size: 5
+        max-page-size: 20
+
+  #  use naver smtp
+  mail:
+    host: smtp.naver.com
+    port: 465
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
+app:
+  host: http://localhost:8080
+
+jwt:
+  secret-key:

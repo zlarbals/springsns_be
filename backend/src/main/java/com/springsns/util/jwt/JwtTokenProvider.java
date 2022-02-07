@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -14,9 +16,11 @@ import java.util.Date;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtTokenProvider {  // JWT토큰 생성 및 유효성 검증
 
-    private String SECRET_KEY = "zlarbalsSecret";
+    @Value("${jwt.secret-key}")
+    private String SECRET_KEY;
 
     //1시간
     private long tokenValidTime = 1000L * 60 * 60;
