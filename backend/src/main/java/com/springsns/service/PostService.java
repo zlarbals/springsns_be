@@ -16,8 +16,7 @@ import com.springsns.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -97,45 +96,45 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    public Slice<PostResponseDto> findPostsByPagingAsDto(Pageable pageable, String email){
+    //TODO
+    public List<PostResponseDto> findPostsByNoOffsetPagingAsDto(int pageSize, long lastIndex, String email) {
+        // 요청한 부분 다음 내용이 존재하는지 확인하기 위해 pageSize+1로 실행.
+        PageRequest limitSize = PageRequest.of(0, pageSize+1);
 
-        Slice<Post> postsByPaging = postRepository.findPostsByPaging(pageable);
+        List<Post> postsByNoOffsetPaging;
 
-        if (email == null) {
-            return postsByPaging.map(post -> new PostResponseDto(post,false));
+        //TODO 매우 지저분하다. jpql의 한계. querydsl 학습 후 리팩토링.
+        if(isFirstRequest(lastIndex)){
+            //첫 요청인 경우
+            postsByNoOffsetPaging = postRepository.findPostsByNoOffsetPagingFirst(limitSize);
+        }else{
+            //첫 요청이 아닌 경우, 파라미터로 넘어온 lastIndex가 존재하는 경우
+            postsByNoOffsetPaging = postRepository.findPostsByNoOffsetPaging(limitSize, lastIndex);
         }
 
-        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
-        return postsByPaging.map(post -> {
-            if (likeRepository.existsByAccountAndPost(account, post)) {
-                return new PostResponseDto(post, true);
-            } else {
-                return new PostResponseDto(post, false);
-            }
-        });
+        return getDtoListAfterLikedPostCheck(postsByNoOffsetPaging,email);
     }
 
     public List<PostResponseDto> findPostsByNicknameAsDto(String nickname, String email) {
-        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
-
         List<Post> postsByNickname = postRepository.findPostsByNickname(nickname);
 
-        return postsByNickname.stream().map(post -> {
-            if (likeRepository.existsByAccountAndPost(account, post)) {
-                return new PostResponseDto(post, true);
-            } else {
-                return new PostResponseDto(post, false);
-            }
-        }).collect(Collectors.toList());
-
+        return getDtoListAfterLikedPostCheck(postsByNickname,email);
     }
 
     public List<PostResponseDto> findPostsByKeywordSearchAsDto(String keyword, String email) {
-        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
-
         List<Post> postsByKeywordSearch = postRepository.findPostsByContentContaining(keyword);
 
-        return postsByKeywordSearch.stream().map(post -> {
+        return getDtoListAfterLikedPostCheck(postsByKeywordSearch,email);
+    }
+
+    private List<PostResponseDto> getDtoListAfterLikedPostCheck(List<Post> posts, String email){
+        if (email == null) {
+            return posts.stream()
+                    .map(post -> new PostResponseDto(post,false)).collect(Collectors.toList());
+        }
+
+        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
+        return posts.stream().map(post->{
             if (likeRepository.existsByAccountAndPost(account, post)) {
                 return new PostResponseDto(post, true);
             } else {
@@ -256,5 +255,13 @@ public class PostService {
         String extension = file.getOriginalFilename().substring(index+1);
 
         return extension.toLowerCase();
+    }
+
+    private boolean isFirstRequest(long lastIndex){
+        if(lastIndex>0){
+            return false;
+        }
+
+        return true;
     }
 }

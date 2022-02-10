@@ -1,6 +1,7 @@
 package com.springsns.controller;
 
-import com.springsns.controller.dto.Result;
+import com.springsns.controller.dto.format.PagingResult;
+import com.springsns.controller.dto.format.Result;
 import com.springsns.controller.dto.PostForm;
 import com.springsns.controller.dto.PostResponseDto;
 import com.springsns.domain.Post;
@@ -8,10 +9,6 @@ import com.springsns.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -46,21 +43,24 @@ public class PostController {
 
         PostResponseDto postResponseDto = new PostResponseDto(post,false);
 
-
-
         return new ResponseEntity(new Result(HttpStatus.CREATED,postResponseDto), HttpStatus.CREATED);
     }
 
     @GetMapping("/post")
-    public ResponseEntity<Result> getPostsByPageSlice(@PageableDefault(size = 5, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable, HttpServletRequest request) {
+    public ResponseEntity getPostsByNoOffsetPaging(@RequestParam(defaultValue = "5") int pageSize, @RequestParam(defaultValue = "0") long lastIndex,HttpServletRequest request){
         log.info("PostController.Get./post");
 
-        //jwt가 없어도 접근할 수 있기 때문에 email이 null일 수 있다.
         String email = (String) request.getAttribute("SignInAccountEmail");
 
-        Slice<PostResponseDto> postResponseDtoSlice = postService.findPostsByPagingAsDto(pageable,email);
+        List<PostResponseDto> postResponseDtoList = postService.findPostsByNoOffsetPagingAsDto(pageSize,lastIndex,email);
+        boolean isFinal = true;
 
-        return new ResponseEntity(new Result(HttpStatus.OK,postResponseDtoSlice),HttpStatus.OK);
+        if (postResponseDtoList.size()>pageSize){
+            postResponseDtoList = postResponseDtoList.stream().limit(pageSize).collect(Collectors.toList());
+            isFinal = false;
+        }
+
+        return new ResponseEntity<>(new PagingResult(HttpStatus.OK,postResponseDtoList,pageSize,isFinal),HttpStatus.OK);
     }
 
     @GetMapping("/post/account/{nickname}")

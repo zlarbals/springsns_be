@@ -140,45 +140,45 @@ ENTRYPOINT ["java","-Dspring.profiles.active=prod","-jar","spring-sns.jar"]
 
 ## Account
 
-|        기능        | HTTP Method |                           URI                            |
-| :----------------: | :---------: | :------------------------------------------------------: |
-|     회원 가입      |    POST     |                         /account                         |
-|   비밀번호 변경    |    PATCH    |                         /account                         |
-|     회원 탈퇴      |   DELETE    |                         /account                         |
-|       로그인       |    POST     |                     /account/sign-in                     |
-|    이메일 인증     |     GET     | /account/check-email-token?email={#email}&token={#token} |
-| 인증 이메일 재전송 |     GET     |               /account/resend-email-token                |
+|        기능        | HTTP Method |                   URI                    |   비고   |
+| :----------------: | :---------: | :--------------------------------------: | :------: |
+|     회원 가입      |    POST     |                 /account                 |
+|   비밀번호 변경    |    PATCH    |                 /account                 | JWT 필요 |
+|     회원 탈퇴      |   DELETE    |                 /account                 | JWT 필요 |
+|       로그인       |    POST     |             /account/sign-in             |
+|    이메일 인증     |     GET     | /account/check-email-token?email=&token= |
+| 인증 이메일 재전송 |     GET     |       /account/resend-email-token        | JWT 필요 |
 
 <br></br>
 
 ## Post
 
-|                  기능                   | HTTP Method |           URI            |
-| :-------------------------------------: | :---------: | :----------------------: |
-|               게시글 등록               |    POST     |          /post           |
-|      게시글 페이징(slice) 가져오기      |     GET     | /post?page={pageNumber}  |
-| 특정 유저가 작성한 게시글 전체 가져오기 |     GET     | /post/account/{nickname} |
-|     게시글에 포함된 이미지 가져오기     |     GET     | /post/image/{imageName}  |
-|               게시글 검색               |     GET     |  /post/search/{keyword}  |
-|               게시글 삭제               |   DELETE    |      /post/{postId}      |
+|                  기능                   | HTTP Method |            URI             |             비고             |
+| :-------------------------------------: | :---------: | :------------------------: | :--------------------------: |
+|               게시글 등록               |    POST     |           /post            |    JWT, 이메일 인증 필요     |
+|      게시글 페이징(slice) 가져오기      |     GET     | /post?pageSize=&lastIndex= | pageSize,lastIndex 생략 가능 |
+| 특정 유저가 작성한 게시글 전체 가져오기 |     GET     |  /post/account/{nickname}  |           JWT 필요           |
+|     게시글에 포함된 이미지 가져오기     |     GET     |  /post/image/{imageName}   |
+|               게시글 검색               |     GET     |   /post/search/{keyword}   |           JWT 필요           |
+|               게시글 삭제               |   DELETE    |       /post/{postId}       |    JWT, 이메일 인증 필요     |
+|        좋아요한 게시글 가져오기         |     GET     |         /post/like         |           JWT 필요           |
 
 <br></br>
 
 ## Comment
 
-|       기능       | HTTP Method |          URI           |
-| :--------------: | :---------: | :--------------------: |
-|    댓글 등록     |    POST     | /comment/post/{postId} |
-| 게시글 댓글 보기 |     GET     | /comment/post/{postId} |
+|       기능       | HTTP Method |          URI           |         비고          |
+| :--------------: | :---------: | :--------------------: | :-------------------: |
+|    댓글 등록     |    POST     | /comment/post/{postId} | JWT, 이메일 인증 필요 |
+| 게시글 댓글 보기 |     GET     | /comment/post/{postId} |       JWT 필요        |
 
 <br></br>
 
 ## Like
 
-|           기능           | HTTP Method |      URI       |
-| :----------------------: | :---------: | :------------: |
-|     좋아요 등록/삭제     |    POST     | /like/{postId} |
-| 좋아요한 게시글 가져오기 |     GET     |     /like      |
+|       기능       | HTTP Method |      URI       |   비고   |
+| :--------------: | :---------: | :------------: | :------: |
+| 좋아요 등록/삭제 |    POST     | /like/{postId} | JWT 필요 |
 
 <br></br>
 

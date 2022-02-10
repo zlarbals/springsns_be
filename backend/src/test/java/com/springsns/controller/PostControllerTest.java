@@ -231,8 +231,8 @@ class PostControllerTest {
         //then
         resultActions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.response.content",hasSize(5))) // slice 적용되었으므로 5개
-                .andExpect(jsonPath("$.response.content.[0].like").value(true));
+                .andExpect(jsonPath("$.response",hasSize(5)))
+                .andExpect(jsonPath("$.response.[0].like").value(true));
 
     }
 
@@ -253,9 +253,9 @@ class PostControllerTest {
         //then
         resultActions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.response.content",hasSize(5))) //slice 적용되었으므로 5개
-                .andExpect(jsonPath("$.response.content.[0].like").value(false))
-                .andExpect(jsonPath("$.response.content.[2].like").value(false));
+                .andExpect(jsonPath("$.response",hasSize(5)))
+                .andExpect(jsonPath("$.response.[0].like").value(false))
+                .andExpect(jsonPath("$.response.[2].like").value(false));
     }
 
     @DisplayName("특정 유저의 게시글 가져오기 - 등록된 사용자")

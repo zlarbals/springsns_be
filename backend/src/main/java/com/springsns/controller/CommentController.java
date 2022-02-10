@@ -1,6 +1,6 @@
 package com.springsns.controller;
 
-import com.springsns.controller.dto.Result;
+import com.springsns.controller.dto.format.Result;
 import com.springsns.controller.dto.CommentForm;
 import com.springsns.controller.dto.CommentResponseDto;
 import com.springsns.domain.Comment;
@@ -30,7 +30,6 @@ public class CommentController {
 
         String email = (String) request.getAttribute("SignInAccountEmail");
 
-        //TODO 이메일 요청에서 받고 계정 존재하는지 확인해야함.
         List<Comment> comments=commentService.findAllComments(postId,email);
 
         List<CommentResponseDto> commentResponseDtoList = comments.stream()

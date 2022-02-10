@@ -1,6 +1,6 @@
 package com.springsns.controller;
 
-import com.springsns.controller.dto.Result;
+import com.springsns.controller.dto.format.Result;
 import com.springsns.controller.dto.AccountResponseDto;
 import com.springsns.controller.dto.ChangePasswordForm;
 import com.springsns.controller.dto.SignInForm;

@@ -1,4 +1,4 @@
-package com.springsns.controller.dto;
+package com.springsns.controller.dto.format;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
