@@ -36,8 +36,6 @@ java -jar springsns-0.0.1-SNAPSHOT.jar
 
 ## [docker 사용 하는 경우]
 
-<u>아래 주의사항에서 설명하는 application-prod.yml 파일을 먼저 설정해주세요.</u>
-
 ### 1. git clone
 
 ```
