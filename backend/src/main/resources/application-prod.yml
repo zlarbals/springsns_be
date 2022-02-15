@@ -3,13 +3,13 @@ spring:
     activate:
       on-profile: prod
   datasource:
-    url: jdbc:h2:mem:~/springsns
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
+    url: jdbc:mysql://database:3306/snsdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    database: mysql
+    databse-platform: org.hibernate.dialect.MySQL5InnoDBDialect
     hibernate:
       ddl-auto: update
 
@@ -23,8 +23,8 @@ spring:
   mail:
     host: smtp.naver.com
     port: 465
-    username:
-    password:
+    username: #naver id
+    password: #naver password
     properties:
       mail:
         smtp:
@@ -34,4 +34,7 @@ app:
   host: http://localhost:8080
 
 jwt:
-  secret-key:
+  secret-key: zlarbalssecret
+
+mail:
+  email: #naver email 주소

@@ -5,13 +5,13 @@
 ### 1. git clone
 
 ```
-git clone https://github.com/zlarbals/SpringSNS.git
+git clone https://github.com/zlarbals/SpringSNS.git .
 ```
 
 ### 2. 디렉토리 이동
 
 ```
-cd springsns/backend
+cd backend
 ```
 
 ### 3. 프로젝트 BUILD
@@ -36,77 +36,63 @@ java -jar springsns-0.0.1-SNAPSHOT.jar
 
 ## [docker 사용 하는 경우]
 
+<u>아래 주의사항에서 설명하는 application-prod.yml 파일을 먼저 설정해주세요.</u>
+
 ### 1. git clone
 
 ```
-git clone https://github.com/zlarbals/SpringSNS.git
+git clone https://github.com/zlarbals/SpringSNS.git .
 ```
 
-### 2. 디렉토리 이동
+### 2. application-prod.yml 파일 설정
 
 ```
-cd springsns/backend
+아래 주의사항을 보고 application-prod.yml 파일의 설정 값을 작성해주세요.
 ```
 
-### 3. 프로젝트 BUILD
+### 3. 디렉토리 이동
+
+```
+cd backend
+```
+
+### 4. 프로젝트 BUILD
 
 ```
 ./mvnw clean package
 ```
 
-### 4. docker image 생성
+### 5. docker compose
 
 ```
-docker build -t spring-sns-image .
-```
-
-### 5. docker container 실행
-
-```
-docker run --name spring-sns -p 8080:8080 -d spring-sns-image
+docker compose up
 ```
 
 <br></br>
 
 ## [주의사항]
 
-### 1. DB
+### 1. maven vs docker
 
-DB의 경우 InMemory DB인 h2를 사용하므로 따로 설정할 필요 없습니다.
-
-다른 DB로 변경할 경우 yml 설정 파일에서 변경 후 사용하면 됩니다.
-
-<!-- ### 2. 이메일 전송
-
-기본적으로 spring.profiles.active가 local로 설정되어 있으므로
-
-인증 이메일 전송 같은 경우 해당 내용이 로그에 남기 때문에
-
-위 실행가이드를 그대로 따라하면 됩니다.
-
-실제 이메일 전송을 원할 경우 네이버 smtp 설정을 진행한 후에
-
-application-prod.yml 파일의 naver id, password, secret key의 빈칸을 채우신 후에
-
-yml파일에 spring.profiles.active를 prod로 변경하거나
-
-다음과 같이 실행하면 됩니다.
+#### 1) maven으로 빌드한 jar 파일을 직접 실행시키는 경우
 
 ```
-java -Dspring.profiles.active=prod -jar springsns-0.0.1-SNAPSHOT.jar
+local 환경에서 인메모리 DB인 h2 데이터베이스를 사용하고
+이메일 전송이 필요한 경우에는 실제 이메일을 전송하지 않고 해당 내용을
+log를 통해 이메일 인증 및 계정 삭제에 대한 정보를 얻을 수 있다.
 ```
 
-도커로 실행할 경우
-
-Dockerfile의 ENTRYPOINT 부분을 다음과 같이 변경하고 위 실행가이드를 따라하면 됩니다.
+#### 2) docker를 사용하는 경우
 
 ```
-ENTRYPOINT ["java","-jar","spring-sns.jar"] ->
+prod 환경에서 SpringSNS 웹 어플리케이션의 이미지를 생성하고
+관계형 DB인 mysql(version 8) 이미지와 생성된 SpringSNS 웹 어플리케이션의 이미지를 컨테이너에 각 각 올리고
+docker network 기능을 사용해서 서로 통신이 가능하도록 compose 파일을 만들었다.
+네이버 smtp를 사용하여 이메일 인증 및 계정 삭제에 대한 정보를 실제 사용자의 이메일로 전송해준다.
 
-ENTRYPOINT ["java","-Dspring.profiles.active=prod","-jar","spring-sns.jar"]
-
-하지만 현재 docker로 실행할 경우 naver smtp에서 인증 오류가 발생하기 때문에 해결방법을 찾고 있습니다.
-``` -->
+- 단 네이버 smtp 설정을 진행한 후에 application-prod.yml 파일에서
+  naver id, naver password와 naver email을 직접 작성해주어야 한다.
+```
 
 <br></br>
 
