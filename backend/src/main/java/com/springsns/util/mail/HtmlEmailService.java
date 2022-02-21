@@ -15,7 +15,7 @@ import javax.mail.internet.MimeMessage;
 @Profile("prod")
 @Component
 @RequiredArgsConstructor
-public class HtmlEmailServiceImpl implements EmailService{
+public class HtmlEmailService implements EmailService{
 
     @Value("${mail.email}")
     private String adminEmail;

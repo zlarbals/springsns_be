@@ -58,4 +58,20 @@ public class Account extends BaseTimeEntity{
         return this.emailCheckToken.equals(token);
     }
 
+    public void changeInfoForDelete(){
+        //계정 닉네임 변경
+        this.nickname="LeftUser";
+        //계정 비활성화
+        this.isActivate=false;
+    }
+
+    public void verifyingEmailAuthentication(){
+        this.emailVerified=true;
+        this.emailVerifiedDate=LocalDateTime.now();
+    }
+
+    public void changePassword(String password){
+        this.password=password;
+    }
+
 }

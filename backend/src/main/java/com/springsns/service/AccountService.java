@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 @Slf4j
@@ -62,11 +61,8 @@ public class AccountService {
     public void processDeleteAccount(String email) {
         Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
 
-        //계정 닉네임 변경
-        account.setNickname("LeftUser");
-        //계정 비활성화
-        account.setActivate(false);
-        //계정 삭제 확인 email 보내기.
+        account.changeInfoForDelete();
+
         sendDeleteConfirmEmail(email);
     }
 
@@ -92,8 +88,7 @@ public class AccountService {
             throw new IllegalArgumentException("토큰이 일치하지 않습니다");
         }
 
-        account.setEmailVerified(true);
-        account.setEmailVerifiedDate(LocalDateTime.now());
+        account.verifyingEmailAuthentication();
 
         return account;
     }
@@ -102,7 +97,7 @@ public class AccountService {
     public Account changePassword(String email, String password) {
         Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
 
-        account.setPassword(passwordEncoder.encode(password));
+        account.changePassword(passwordEncoder.encode(password));
 
         return account;
     }
