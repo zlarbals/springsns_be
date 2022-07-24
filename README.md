@@ -101,6 +101,7 @@ docker network 기능을 사용해서 서로 통신이 가능하도록 compose �
 - 게시글 등록
 - 게시글 삭제(게시글 주인만 가능, 좋아요/댓글 존재할 시 삭제할 수 없음)
 - 댓글 등록
+- 게시글 등록시 본문에서 추천 계정 찾기, ~~***멘션 등록(구현 예정)***~~
 
 <br></br>
 
@@ -132,6 +133,7 @@ docker network 기능을 사용해서 서로 통신이 가능하도록 compose �
 |       로그인       |    POST     |             /account/sign-in             |
 |    이메일 인증     |     GET     | /account/check-email-token?email=&token= |
 | 인증 이메일 재전송 |     GET     |       /account/resend-email-token        | JWT 필요 |
+| 게시글 등록시 본문에서 추천 계정 찾기 |     GET     |       /account/search/{nickname}        | JWT, 이메일 인증 필요 |
 
 <br></br>
 

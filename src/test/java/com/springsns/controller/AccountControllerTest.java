@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
@@ -466,6 +467,129 @@ class AccountControllerTest {
         assertNotNull(accountRepository.findActivateAccountByEmail(registeredAccount.getEmail()));
     }
 
+    @DisplayName("계정 검색 - 입력 값 정상 1")
+    @Test
+    void searchAccountWithCorrectInput1() throws Exception{
+        //given
+        Account account  = registerAccount();
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
+        String accountJwt = getJWT(account.getEmail());
+        registerAccount("searchAccount1@email.com","search1");
+        registerAccount("searchAccount2@email.com","search2");
+        registerAccount("searchAccount3@email.com","sech3");
+        String nickname = "earc";
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/search/" + nickname).header("Authorization", accountJwt))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.response",hasSize(2)));
+    }
+
+    @DisplayName("계정 검색 - 입력 값 정상 2")
+    @Test
+    void searchAccountWithCorrectInput2() throws Exception{
+        //given
+        Account account  = registerAccount();
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
+        String accountJwt = getJWT(account.getEmail());
+        registerAccount("searchAccount1@email.com","search1");
+        registerAccount("searchAccount2@email.com","search2");
+        registerAccount("searchAccount3@email.com","sech3");
+        String nickname = "se";
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/search/" + nickname).header("Authorization", accountJwt))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.response",hasSize(3)));
+    }
+
+    @DisplayName("계정 검색 - 입력 값 정상 3")
+    @Test
+    void searchAccountWithCorrectInput3() throws Exception{
+        //given
+        Account account  = registerAccount();
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
+        String accountJwt = getJWT(account.getEmail());
+        registerAccount("searchAccount1@email.com","search1");
+        registerAccount("searchAccount2@email.com","search2");
+        registerAccount("searchAccount3@email.com","sech3");
+        String nickname = "ec";
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/search/" + nickname).header("Authorization", accountJwt))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.response",hasSize(1)));
+    }
+
+    @DisplayName("계정 검색 - 입력 값 정상 4")
+    @Test
+    void searchAccountWithCorrectInput4() throws Exception{
+        //given
+        Account account  = registerAccount();
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
+        String accountJwt = getJWT(account.getEmail());
+        registerAccount("searchAccount1@email.com","search1");
+        registerAccount("searchAccount2@email.com","search2");
+        registerAccount("searchAccount3@email.com","sech3");
+        String nickname = "ch4";
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/search/" + nickname).header("Authorization", accountJwt))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.response",hasSize(0)));
+    }
+
+    @DisplayName("계정 검색 - 잘못된 JWT")
+    @Test
+    void searchAccountWithWrongJWT() throws Exception{
+        //given
+        Account account  = registerAccount();
+        authenticateEmail(account.getEmail(),account.getEmailCheckToken());
+        registerAccount("searchAccount1@email.com","search1");
+        registerAccount("searchAccount2@email.com","search2");
+        registerAccount("searchAccount3@email.com","sech3");
+        String nickname = "earc";
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/search/" + nickname).header("Authorization", "wrong jwt"))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("계정 검색 - 이메일 인증 안된 사용자")
+    @Test
+    void searchAccountWithUnauthenticatedUser() throws Exception{
+        //given
+        Account account  = registerAccount();
+        String accountJwt = getJWT(account.getEmail());
+        registerAccount("searchAccount1@email.com","search1");
+        registerAccount("searchAccount2@email.com","search2");
+        registerAccount("searchAccount3@email.com","sech3");
+        String nickname = "earc";
+
+        //when
+        ResultActions resultActions = mockMvc.perform(get("/account/search/" + nickname).header("Authorization", accountJwt))
+                .andDo(print());
+
+        //then
+        resultActions.andExpect(status().isForbidden());
+    }
+
+
     private Account registerAccount() {
         String email = "register@email.com";
         String nickname = "register";
@@ -474,6 +598,17 @@ class AccountControllerTest {
 
         Account account = accountService.processSignUpAccount(signUpForm);
         return account;
+    }
+
+    private Account registerAccount(String email,String nickname){
+        SignUpForm signUpForm = new SignUpForm(nickname, email, "12345678");
+
+        Account account = accountService.processSignUpAccount(signUpForm);
+        return account;
+    }
+
+    private void authenticateEmail(String email,String token) {
+        accountService.verifyEmailToken(email,token);
     }
 
     private SignUpForm getSignUpForm() {

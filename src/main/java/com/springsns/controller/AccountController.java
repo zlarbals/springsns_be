@@ -16,6 +16,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -103,4 +106,17 @@ public class AccountController {
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
+    @GetMapping("/account/search/{nickname}")
+    public ResponseEntity<Result> searchRecommendAccounts(@PathVariable String nickname, HttpServletRequest request){
+        log.info("AccountController.Get./account/search");
+
+        String email = (String) request.getAttribute("SignInAccountEmail");
+        List<Account> recommendAccounts = accountService.searchRecommendAccounts(nickname, email);
+
+        List<AccountResponseDto> recommendAccountDtos = recommendAccounts.stream()
+                .map(recommendAccount -> new AccountResponseDto(recommendAccount))
+                .collect(Collectors.toList());
+
+        return new ResponseEntity(new Result(HttpStatus.OK,recommendAccountDtos),HttpStatus.OK);
+    }
 }

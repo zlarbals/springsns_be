@@ -1,5 +1,6 @@
 package com.springsns.service;
 
+import com.springsns.exception.EmailNotVerifiedException;
 import com.springsns.util.jwt.JwtTokenProvider;
 import com.springsns.controller.dto.SignUpForm;
 import com.springsns.config.AppProperties;
@@ -17,6 +18,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -102,6 +104,13 @@ public class AccountService {
         return account;
     }
 
+    public List<Account> searchRecommendAccounts(String nickname, String email) {
+        Account account = accountRepository.findActivateAccountByEmail(email).orElseThrow(()->new IllegalArgumentException("존재하지 않는 계정입니다."));
+        validateEmailVerified(account);
+
+        return accountRepository.findAccountByNicknameContaining(nickname);
+    }
+
     private void validateDuplicateAccount(String email, String nickname) {
         if(accountRepository.existsByEmail(email)){
             throw new AccountDuplicatedException("중복된 이메일 입니다.");
@@ -174,5 +183,11 @@ public class AccountService {
                 .build();
 
         emailService.sendEmail(emailMessage);
+    }
+
+    private void validateEmailVerified(Account account){
+        if(!account.isEmailVerified()){
+            throw new EmailNotVerifiedException("이메일 인증이 완료되지 않았습니다.");
+        }
     }
 }
