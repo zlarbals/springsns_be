@@ -33,3 +33,6 @@ app:
 
 jwt:
   secret-key: secret
+
+server:
+  port: 8090
